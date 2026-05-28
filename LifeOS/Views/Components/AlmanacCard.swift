@@ -1,64 +1,42 @@
 import SwiftUI
 
-/// 老黄历卡片 - 展示今日宜忌
+/// 锦囊卡片 - 今日宜忌 (和紙手帳風)
 struct AlmanacCard: View {
     let almanac: DailyAlmanac
 
     var body: some View {
         VStack(alignment: .leading, spacing: Layout.spacingL) {
-            // 关键词
-            HStack {
+            // 关键词 - 毛笔墨迹风
+            VStack(alignment: .leading, spacing: Layout.spacingS) {
                 Text("今日关键词")
                     .font(.lifeCaption)
                     .foregroundStyle(Color.lifeTextSecondary)
-                Spacer()
+
+                BrushStrokeText(text: almanac.keyword)
             }
 
-            Text(almanac.keyword)
-                .font(.lifeDisplay)
-                .foregroundStyle(Color.lifeText)
-
-            Divider()
+            // 和纸条分隔
+            WashiTapeDivider(color: .washiTan, width: 80)
                 .padding(.vertical, Layout.spacingXS)
 
             // 宜忌
             HStack(alignment: .top, spacing: Layout.spacingXL) {
                 // 宜
                 VStack(alignment: .leading, spacing: Layout.spacingS) {
-                    HStack(spacing: 4) {
-                        Circle()
-                            .fill(Color.lifeYi)
-                            .frame(width: 8, height: 8)
-                        Text("宜")
-                            .font(.lifeHeadline)
-                            .foregroundStyle(Color.lifeYi)
-                    }
+                    yiJiHeader(label: "宜", color: .lifeYi)
 
                     ForEach(almanac.yiList, id: \.self) { item in
-                        Text(item)
-                            .font(.lifeAlmanacItem)
-                            .foregroundStyle(Color.lifeText)
-                            .padding(.vertical, 2)
+                        yiJiItem(text: item, color: .lifeYi, icon: "checkmark.circle.fill")
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
 
                 // 忌
                 VStack(alignment: .leading, spacing: Layout.spacingS) {
-                    HStack(spacing: 4) {
-                        Circle()
-                            .fill(Color.lifeJi)
-                            .frame(width: 8, height: 8)
-                        Text("忌")
-                            .font(.lifeHeadline)
-                            .foregroundStyle(Color.lifeJi)
-                    }
+                    yiJiHeader(label: "忌", color: .lifeJi)
 
                     ForEach(almanac.jiList, id: \.self) { item in
-                        Text(item)
-                            .font(.lifeAlmanacItem)
-                            .foregroundStyle(Color.lifeTextSecondary)
-                            .padding(.vertical, 2)
+                        yiJiItem(text: item, color: .lifeJi, icon: "xmark.circle.fill")
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -66,8 +44,6 @@ struct AlmanacCard: View {
 
             // 提醒
             if !almanac.reminder.isEmpty {
-                Divider()
-
                 HStack(alignment: .top, spacing: Layout.spacingS) {
                     Image(systemName: "lightbulb")
                         .font(.system(size: 14))
@@ -78,18 +54,70 @@ struct AlmanacCard: View {
                         .font(.lifeReminder)
                         .foregroundStyle(Color.lifeText)
                 }
+                .padding(Layout.spacingM)
+                .background(
+                    RoundedRectangle(cornerRadius: Layout.radiusS)
+                        .fill(Color.lifeReminder.opacity(0.08))
+                )
             }
 
-            // 鼓励
+            // 鼓励 - 和纸条横幅风
             if !almanac.encouragement.isEmpty {
                 Text(almanac.encouragement)
                     .font(.lifeEncouragement)
                     .foregroundStyle(Color.lifeAccent)
                     .frame(maxWidth: .infinity, alignment: .center)
-                    .padding(.top, Layout.spacingXS)
+                    .padding(.vertical, Layout.spacingS)
+                    .padding(.horizontal, Layout.spacingM)
+                    .background(
+                        RoundedRectangle(cornerRadius: Layout.radiusS)
+                            .fill(Color.lifeAccent.opacity(0.06))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: Layout.radiusS)
+                                    .fill(
+                                        LinearGradient(
+                                            colors: [.white.opacity(0.1), .clear],
+                                            startPoint: .top,
+                                            endPoint: .bottom
+                                        )
+                                    )
+                            )
+                    )
             }
         }
-        .lifeCard()
+        .paperCard()
+        .washiTape(.washiTan, position: .topTrailing)
+    }
+
+    // MARK: - 宜忌标题
+
+    private func yiJiHeader(label: String, color: Color) -> some View {
+        HStack(spacing: Layout.spacingXS) {
+            Text(label)
+                .font(.lifeHeadline)
+                .foregroundStyle(color)
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 3)
+        .background(
+            Capsule()
+                .fill(color.opacity(0.1))
+        )
+    }
+
+    // MARK: - 宜忌条目
+
+    private func yiJiItem(text: String, color: Color, icon: String) -> some View {
+        HStack(spacing: Layout.spacingS) {
+            Image(systemName: icon)
+                .font(.system(size: 10))
+                .foregroundStyle(color)
+                .frame(width: 14, height: 14)
+
+            Text(text)
+                .font(.lifeAlmanacItem)
+                .foregroundStyle(Color.lifeText)
+        }
     }
 }
 
@@ -101,7 +129,9 @@ struct AlmanacCard: View {
     almanac.reminder = "你今天需要的不是更多计划，而是一个可完成的动作"
     almanac.encouragement = "你已经在路上了"
 
-    return AlmanacCard(almanac: almanac)
-        .padding()
-        .background(Color.lifeBackground)
+    return ScrollView {
+        AlmanacCard(almanac: almanac)
+            .padding()
+    }
+    .background(Color.lifeBackground)
 }

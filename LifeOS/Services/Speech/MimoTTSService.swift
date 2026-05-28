@@ -62,7 +62,7 @@ final class MimoTTSService: NSObject, TTSServiceProtocol {
                 ["role": "user", "content": "请朗读以下文字"],
                 ["role": "assistant", "content": text]
             ],
-            "max_tokens": 4096
+            "max_completion_tokens": 4096
         ]
 
         request.httpBody = try JSONSerialization.data(withJSONObject: body)

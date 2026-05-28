@@ -105,7 +105,7 @@ struct PostRecordFlow: View {
 
         await MainActor.run {
             isGenerating = false
-            if let diary = service.todayDiary {
+            if let diary = service.currentDiary {
                 generatedDiary = diary
             } else if case .error(let msg) = service.loadingState {
                 errorMessage = msg

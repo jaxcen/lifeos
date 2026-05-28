@@ -31,10 +31,8 @@ struct MainRecordView: View {
                         questionnaireToggle
                     }
                     .padding(Layout.spacingL)
+                    .padding(.bottom, Layout.spacingXL)
                 }
-
-                // 底部保存栏
-                bottomBar
             }
             .background(Color.lifeBackground)
             .sheet(isPresented: Binding(
@@ -147,12 +145,15 @@ struct MainRecordView: View {
     }
 
     private var textInputArea: some View {
-        VStack(spacing: Layout.spacingM) {
+        VStack(spacing: 0) {
             // 模板提示
             if let template = viewModel?.selectedTemplate {
                 templateBanner(template)
+                    .padding(.horizontal, Layout.spacingM)
+                    .padding(.top, Layout.spacingM)
             }
 
+            // 文字输入
             TextEditor(text: Binding(
                 get: { viewModel?.inputText ?? "" },
                 set: { viewModel?.inputText = $0 }
@@ -160,19 +161,55 @@ struct MainRecordView: View {
             .font(.lifeBody)
             .foregroundStyle(Color.lifeText)
             .scrollContentBackground(.hidden)
-            .frame(minHeight: 160)
+            .frame(minHeight: 120)
+            .padding(.horizontal, Layout.spacingM)
             .overlay(alignment: .topLeading) {
                 if viewModel?.inputText.isEmpty ?? true {
                     Text(placeholderText)
                         .font(.lifeBody)
                         .foregroundStyle(Color.lifeTextSecondary.opacity(0.5))
                         .padding(.top, 8)
-                        .padding(.leading, 5)
+                        .padding(.leading, Layout.spacingM + 5)
                         .allowsHitTesting(false)
                 }
             }
+
+            // 底部工具栏
+            HStack {
+                // 模板按钮
+                Button {
+                    viewModel?.showTemplateSheet = true
+                } label: {
+                    Image(systemName: "text.book.closed")
+                        .font(.system(size: 18))
+                        .foregroundStyle(Color.lifeAccent)
+                        .frame(width: 36, height: 36)
+                        .background(Color.lifeAccent.opacity(0.1))
+                        .clipShape(Circle())
+                }
+
+                Spacer()
+
+                // 发送按钮
+                Button {
+                    Task {
+                        await viewModel?.save()
+                    }
+                } label: {
+                    Image(systemName: "arrow.up.circle.fill")
+                        .font(.system(size: 32))
+                        .foregroundStyle(
+                            (viewModel?.canSave ?? false)
+                                ? Color.lifeAccent
+                                : Color.lifeAccent.opacity(0.4)
+                        )
+                }
+                .disabled(!(viewModel?.canSave ?? false))
+            }
+            .padding(.horizontal, Layout.spacingM)
+            .padding(.vertical, Layout.spacingS)
         }
-        .lifeCard()
+        .lifeCard(padding: 0)
     }
 
     private var placeholderText: String {
@@ -203,34 +240,84 @@ struct MainRecordView: View {
     }
 
     private var voiceInputArea: some View {
-        VoiceRecordingWaveformView(
-            speechState: viewModel?.speechState ?? .idle,
-            inputText: viewModel?.inputText ?? "",
-            onToggle: {
-                Task { await viewModel?.toggleVoiceInput() }
+        VStack(spacing: Layout.spacingM) {
+            VoiceRecordingWaveformView(
+                speechState: viewModel?.speechState ?? .idle,
+                inputText: viewModel?.inputText ?? "",
+                onToggle: {
+                    Task { await viewModel?.toggleVoiceInput() }
+                }
+            )
+
+            // 发送按钮 - 识别完成后显示
+            if viewModel?.canSave == true {
+                Button {
+                    Task {
+                        await viewModel?.save()
+                    }
+                } label: {
+                    HStack(spacing: Layout.spacingXS) {
+                        Image(systemName: "arrow.up.circle.fill")
+                            .font(.system(size: 20))
+                        Text("记录")
+                            .font(.lifeBodyEmphasis)
+                    }
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 24)
+                    .padding(.vertical, 12)
+                    .background(Color.lifeAccent)
+                    .clipShape(Capsule())
+                }
+                .transition(.opacity.combined(with: .move(edge: .bottom)))
             }
-        )
+        }
+        .animation(.easeInOut(duration: 0.2), value: viewModel?.canSave ?? false)
     }
 
     private var photoInputArea: some View {
-        PhotoEntryView(
-            photoImage: Binding(
-                get: { viewModel?.photoImage },
-                set: { viewModel?.photoImage = $0 }
-            ),
-            photoDescription: Binding(
-                get: { viewModel?.photoDescription ?? "" },
-                set: { viewModel?.photoDescription = $0 }
-            ),
-            selectedPhotos: Binding(
-                get: { viewModel?.selectedPhotos ?? [] },
-                set: { viewModel?.selectedPhotos = $0 }
-            ),
-            showPhotoPicker: Binding(
-                get: { viewModel?.showPhotoPicker ?? false },
-                set: { viewModel?.showPhotoPicker = $0 }
+        VStack(spacing: Layout.spacingM) {
+            PhotoEntryView(
+                photoImage: Binding(
+                    get: { viewModel?.photoImage },
+                    set: { viewModel?.photoImage = $0 }
+                ),
+                photoDescription: Binding(
+                    get: { viewModel?.photoDescription ?? "" },
+                    set: { viewModel?.photoDescription = $0 }
+                ),
+                selectedPhotos: Binding(
+                    get: { viewModel?.selectedPhotos ?? [] },
+                    set: { viewModel?.selectedPhotos = $0 }
+                ),
+                showPhotoPicker: Binding(
+                    get: { viewModel?.showPhotoPicker ?? false },
+                    set: { viewModel?.showPhotoPicker = $0 }
+                )
             )
-        )
+
+            // 发送按钮 - 照片选择完成后显示
+            if viewModel?.canSave == true {
+                Button {
+                    Task {
+                        await viewModel?.save()
+                    }
+                } label: {
+                    HStack(spacing: Layout.spacingXS) {
+                        Image(systemName: "arrow.up.circle.fill")
+                            .font(.system(size: 20))
+                        Text("记录")
+                            .font(.lifeBodyEmphasis)
+                    }
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 24)
+                    .padding(.vertical, 12)
+                    .background(Color.lifeAccent)
+                    .clipShape(Capsule())
+                }
+                .transition(.opacity.combined(with: .move(edge: .bottom)))
+            }
+        }
+        .animation(.easeInOut(duration: 0.2), value: viewModel?.canSave ?? false)
     }
 
     // MARK: - 问卷
@@ -290,55 +377,6 @@ struct MainRecordView: View {
             }
         }
         .lifeCard(padding: 0)
-    }
-
-    // MARK: - 底部栏
-
-    private var bottomBar: some View {
-        HStack(spacing: Layout.spacingL) {
-            // 模板按钮（仅文字模式）
-            if viewModel?.selectedMethod == .text {
-                Button {
-                    viewModel?.showTemplateSheet = true
-                } label: {
-                    Image(systemName: "text.book.closed")
-                        .font(.system(size: 20))
-                        .foregroundStyle(Color.lifeAccent)
-                        .frame(width: 44, height: 44)
-                        .background(Color.lifeAccent.opacity(0.1))
-                        .clipShape(Circle())
-                }
-            }
-
-            Spacer()
-
-            // 保存按钮
-            Button {
-                Task {
-                    await viewModel?.save()
-                }
-            } label: {
-                HStack(spacing: Layout.spacingXS) {
-                    Image(systemName: "checkmark")
-                    Text("记录")
-                }
-                .font(.lifeBodyEmphasis)
-                .foregroundStyle(.white)
-                .padding(.horizontal, 24)
-                .padding(.vertical, 12)
-                .background(
-                    (viewModel?.canSave ?? false)
-                        ? Color.lifeAccent
-                        : Color.lifeAccent.opacity(0.5)
-                )
-                .clipShape(Capsule())
-            }
-            .disabled(!(viewModel?.canSave ?? false))
-        }
-        .padding(.horizontal, Layout.spacingL)
-        .padding(.vertical, Layout.spacingM)
-        .background(Color.lifeCardBackground)
-        .shadow(color: .black.opacity(0.05), radius: 8, y: -2)
     }
 
     // MARK: - 保存提示

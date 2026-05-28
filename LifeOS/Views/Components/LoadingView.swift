@@ -53,7 +53,7 @@ struct AIGeneratingView: View {
 }
 
 #Preview {
-    AIGeneratingView(message: "正在生成今日老黄历")
+    AIGeneratingView(message: "正在生成今日锦囊")
         .padding()
         .background(Color.lifeBackground)
 }

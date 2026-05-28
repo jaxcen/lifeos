@@ -14,8 +14,8 @@ struct HomeView: View {
                 VStack(spacing: Layout.spacingL) {
                     // 日期头
                     DateHeaderView(
-                        date: viewModel?.todayDateString ?? "",
-                        weekday: viewModel?.todayWeekday ?? ""
+                        date: viewModel?.selectedDateString ?? "",
+                        weekday: viewModel?.selectedWeekday ?? ""
                     )
 
                     // 老黄历
@@ -42,7 +42,7 @@ struct HomeView: View {
                 get: { viewModel?.showDiarySheet ?? false },
                 set: { viewModel?.showDiarySheet = $0 }
             )) {
-                if let diary = viewModel?.todayDiary {
+                if let diary = viewModel?.currentDiary {
                     DiaryDetailView(diary: diary)
                 }
             }
@@ -50,7 +50,7 @@ struct HomeView: View {
                 get: { viewModel?.showForecastSheet ?? false },
                 set: { viewModel?.showForecastSheet = $0 }
             )) {
-                if let forecast = viewModel?.tomorrowForecast {
+                if let forecast = viewModel?.currentForecast {
                     ForecastDetailView(forecast: forecast)
                 }
             }
@@ -75,7 +75,7 @@ struct HomeView: View {
             case .loading(let msg):
                 AIGeneratingView(message: msg)
             default:
-                if let almanac = vm.todayAlmanac {
+                if let almanac = vm.currentAlmanac {
                     AlmanacCard(almanac: almanac)
                         .transition(.opacity.combined(with: .move(edge: .top)))
                 } else {
@@ -121,9 +121,9 @@ struct HomeView: View {
 
     @ViewBuilder
     private var diarySection: some View {
-        if let diary = viewModel?.todayDiary {
+        if let diary = viewModel?.currentDiary {
             DiaryCard(diary: diary)
-        } else if viewModel?.todayAlmanac != nil {
+        } else if viewModel?.currentAlmanac != nil {
             Button {
                 Task {
                     await viewModel?.generateDiary()
@@ -148,9 +148,9 @@ struct HomeView: View {
 
     @ViewBuilder
     private var forecastSection: some View {
-        if let forecast = viewModel?.tomorrowForecast {
+        if let forecast = viewModel?.currentForecast {
             ForecastCard(forecast: forecast)
-        } else if viewModel?.todayAlmanac != nil {
+        } else if viewModel?.currentAlmanac != nil {
             Button {
                 Task {
                     await viewModel?.generateForecast()

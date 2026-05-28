@@ -19,7 +19,7 @@ enum ModelProvider: String, CaseIterable, Codable {
         case .tongyi: return "qwen-max"
         case .zhipu: return "glm-4"
         case .deepseek: return "deepseek-chat"
-        case .mimo: return "mimo-v2.5"
+        case .mimo: return "mimo-v2.5-pro"
         case .mock: return "mock-model"
         }
     }

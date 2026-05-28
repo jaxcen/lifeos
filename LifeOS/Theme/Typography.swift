@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// 设计系统 - 字体
+/// 设计系统 - 字体 (和紙手帳風)
 extension Font {
     // MARK: - 标题
     /// 大标题 - 日期、关键词
@@ -37,4 +37,14 @@ extension Font {
 
     /// 鼓励语
     static let lifeEncouragement = Font.system(size: 14, weight: .medium, design: .serif)
+
+    // MARK: - 和紙手帳風新增
+    /// 关键词大字 - 毛笔风
+    static let lifeKeywordDisplay = Font.system(size: 40, weight: .bold, design: .serif)
+
+    /// 日期数字 - 轻盈衬线
+    static let lifeDateNumber = Font.system(size: 28, weight: .light, design: .serif)
+
+    /// 日期标签 - 月/星期
+    static let lifeDateLabel = Font.system(size: 11, weight: .medium)
 }

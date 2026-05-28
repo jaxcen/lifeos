@@ -15,7 +15,7 @@ struct ContentView: View {
 
             InsightsView()
                 .tabItem {
-                    Label("洞察", systemImage: "doc.text.magnifyingglass")
+                    Label("洞察", systemImage: "book.closed")
                 }
 
             ProfileView()

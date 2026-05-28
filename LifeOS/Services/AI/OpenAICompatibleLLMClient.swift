@@ -27,7 +27,7 @@ final class OpenAICompatibleLLMClient: LLMClientProtocol {
             "model": modelName,
             "messages": messages.map { ["role": $0.role.rawValue, "content": $0.content] },
             "temperature": config.temperature,
-            "max_tokens": config.maxTokens
+            "max_completion_tokens": config.maxTokens
         ]
 
         request.httpBody = try JSONSerialization.data(withJSONObject: body)

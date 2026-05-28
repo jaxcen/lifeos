@@ -1,11 +1,12 @@
 import SwiftUI
 
-/// 明日推演卡片
+/// 明日推演卡片 (和紙手帳風 - 略冷纸色暗示"未来")
 struct ForecastCard: View {
     let forecast: TomorrowForecast
 
     var body: some View {
         VStack(alignment: .leading, spacing: Layout.spacingL) {
+            // 标题
             HStack {
                 Image(systemName: "sunrise")
                     .font(.system(size: 14))
@@ -17,11 +18,17 @@ struct ForecastCard: View {
             }
 
             // 预测能量
-            Text(forecast.predictedEnergy)
-                .font(.lifeBody)
-                .foregroundStyle(Color.lifeText)
+            HStack(alignment: .top, spacing: Layout.spacingS) {
+                Image(systemName: "bolt.fill")
+                    .font(.system(size: 12))
+                    .foregroundStyle(Color.lifeAccent)
+                    .padding(.top, 2)
+                Text(forecast.predictedEnergy)
+                    .font(.lifeBody)
+                    .foregroundStyle(Color.lifeText)
+            }
 
-            // 风险提示
+            // 风险提示 - 和纸条横幅风
             if let risk = forecast.riskAlert, !risk.isEmpty {
                 HStack(alignment: .top, spacing: Layout.spacingS) {
                     Image(systemName: "exclamationmark.triangle")
@@ -32,20 +39,32 @@ struct ForecastCard: View {
                         .font(.lifeCaption)
                         .foregroundStyle(Color.lifeJi)
                 }
+                .padding(Layout.spacingM)
+                .background(
+                    RoundedRectangle(cornerRadius: Layout.radiusS)
+                        .fill(Color.lifeJi.opacity(0.06))
+                )
             }
 
-            // 建议行动
+            // 建议行动 - 印章编号风
             if !forecast.suggestedActions.isEmpty {
-                VStack(alignment: .leading, spacing: Layout.spacingXS) {
+                VStack(alignment: .leading, spacing: Layout.spacingM) {
                     Text("建议行动")
                         .font(.lifeCaption)
                         .foregroundStyle(Color.lifeTextSecondary)
 
-                    ForEach(forecast.suggestedActions, id: \.self) { action in
-                        HStack(spacing: Layout.spacingS) {
-                            Circle()
-                                .fill(Color.lifeAccent.opacity(0.3))
-                                .frame(width: 6, height: 6)
+                    ForEach(Array(forecast.suggestedActions.enumerated()), id: \.offset) { index, action in
+                        HStack(spacing: Layout.spacingM) {
+                            // 编号印章
+                            Text("\(index + 1)")
+                                .font(.lifeTag)
+                                .foregroundStyle(.white)
+                                .frame(width: 20, height: 20)
+                                .background(
+                                    Circle()
+                                        .fill(Color.lifeAccent.opacity(0.7))
+                                )
+
                             Text(action)
                                 .font(.lifeCaption)
                                 .foregroundStyle(Color.lifeText)
@@ -54,15 +73,19 @@ struct ForecastCard: View {
                 }
             }
 
-            Divider()
-
             // 一句话建议
-            Text(forecast.oneLineAdvice)
-                .font(.lifeEncouragement)
-                .foregroundStyle(Color.lifeAccent)
-                .frame(maxWidth: .infinity, alignment: .center)
+            if !forecast.oneLineAdvice.isEmpty {
+                WashiTapeDivider(color: .washiRose, width: 60)
+
+                Text(forecast.oneLineAdvice)
+                    .font(.lifeEncouragement)
+                    .foregroundStyle(Color.lifeAccent)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .italic()
+            }
         }
-        .lifeCard()
+        .paperCard(tint: .paperCool)
+        .washiTape(.washiRose, position: .topLeading)
     }
 }
 
@@ -76,7 +99,9 @@ struct ForecastCard: View {
     ]
     forecast.oneLineAdvice = "少想多做"
 
-    return ForecastCard(forecast: forecast)
-        .padding()
-        .background(Color.lifeBackground)
+    return ScrollView {
+        ForecastCard(forecast: forecast)
+            .padding()
+    }
+    .background(Color.lifeBackground)
 }

@@ -1,26 +1,26 @@
 import SwiftUI
 
-/// 设计系统 - 颜色
+/// 设计系统 - 颜色 (和紙手帳風)
 extension Color {
     // MARK: - 主色调
-    /// 米白 - 主背景
-    static let lifeBackground = Color(hex: "FAF8F5")
-    /// 暖灰 - 次要背景
-    static let lifeCardBackground = Color.white
-    /// 浅蓝 - 主强调色
-    static let lifeAccent = Color(hex: "7EB8D0")
-    /// 深蓝灰 - 文字
-    static let lifeText = Color(hex: "2C3E50")
-    /// 浅灰 - 次要文字
-    static let lifeTextSecondary = Color(hex: "8E9AAD")
+    /// 暖 parchment cream - 主背景
+    static let lifeBackground = Color(hex: "F7F3ED")
+    /// 暖纸白 - 卡片背景
+    static let lifeCardBackground = Color(hex: "FFFCF7")
+    /// 赭石 - 主强调色 (印章色)
+    static let lifeAccent = Color(hex: "C4956A")
+    /// 暖深棕 - 文字
+    static let lifeText = Color(hex: "3D3529")
+    /// 暖灰褐 - 次要文字
+    static let lifeTextSecondary = Color(hex: "9E9485")
 
     // MARK: - 功能色
-    /// 淡绿 - 宜/正面
-    static let lifeYi = Color(hex: "8BC5A3")
-    /// 浅橙 - 忌/注意
-    static let lifeJi = Color(hex: "E8A87C")
-    /// 暖棕 - 提醒
-    static let lifeReminder = Color(hex: "C4A882")
+    /// 鼠尾草绿 - 宜/正面
+    static let lifeYi = Color(hex: "8BAF7E")
+    /// 暖琥珀 - 忌/注意
+    static let lifeJi = Color(hex: "D4916B")
+    /// 和紙棕 - 提醒
+    static let lifeReminder = Color(hex: "B8A089")
 
     // MARK: - 情绪色
     static let moodCalm = Color(hex: "A8D8EA")
@@ -30,8 +30,22 @@ extension Color {
     static let moodHappy = Color(hex: "C1E1C1")
 
     // MARK: - 卡片渐变
-    static let cardGradientStart = Color.white
-    static let cardGradientEnd = Color(hex: "FDFCFA")
+    static let cardGradientStart = Color(hex: "FFFCF7")
+    static let cardGradientEnd = Color(hex: "F9F4ED")
+
+    // MARK: - 和紙風 (Washi Style)
+    /// 牛皮纸棕 - 和纸条
+    static let washiTan = Color(hex: "D4A574")
+    /// 雾蓝 - 和纸条
+    static let washiBlue = Color(hex: "9BB5C4")
+    /// 玫瑰灰 - 和纸条
+    static let washiRose = Color(hex: "C9A0B0")
+    /// 纸纹叠加色 (用于 grain 效果)
+    static let paperGrain = Color(hex: "E8DFD3")
+    /// 略暖的纸色 - 用于日记卡片
+    static let paperWarm = Color(hex: "FFF8F0")
+    /// 略冷的纸色 - 用于预测卡片
+    static let paperCool = Color(hex: "F5F3F0")
 }
 
 // MARK: - Hex 颜色初始化
