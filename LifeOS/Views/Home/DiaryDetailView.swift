@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// 侧写日记详情 - 底部弹出
+/// 观察日记详情 - 底部弹出
 struct DiaryDetailView: View {
     let diary: AIDiary
     @Environment(\.dismiss) private var dismiss

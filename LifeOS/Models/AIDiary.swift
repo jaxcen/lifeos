@@ -1,7 +1,7 @@
 import Foundation
 import SwiftData
 
-/// AI 生成的今日人生侧写日记
+/// AI 生成的今日人生观察日记
 @Model
 final class AIDiary {
     var id: UUID

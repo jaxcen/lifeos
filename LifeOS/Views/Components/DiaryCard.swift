@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// 侧写日记卡片 (和紙手帳風 - 笔记本横线纸风)
+/// 观察日记卡片 (和紙手帳風 - 笔记本横线纸风)
 struct DiaryCard: View {
     let diary: AIDiary
 
@@ -11,7 +11,7 @@ struct DiaryCard: View {
                 Image(systemName: "pencil.line")
                     .font(.system(size: 14))
                     .foregroundStyle(Color.lifeAccent)
-                Text("侧写日记")
+                Text("观察日记")
                     .font(.lifeCaption)
                     .foregroundStyle(Color.lifeTextSecondary)
                 Spacer()

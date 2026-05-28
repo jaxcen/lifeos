@@ -7,6 +7,12 @@ enum SpeechState: Equatable {
     case processing
     case completed(String)
     case error(String)
+
+    /// 是否正在监听中
+    var isListening: Bool {
+        if case .listening = self { return true }
+        return false
+    }
 }
 
 /// 语音服务协议

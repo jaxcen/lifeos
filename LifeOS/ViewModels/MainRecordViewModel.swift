@@ -32,6 +32,8 @@ final class MainRecordViewModel {
     // MARK: - 语音
     var speechState: SpeechState = .idle
     private let speechService: SpeechServiceProtocol
+    /// 已提交的文本（在语音识别开始前的文本）
+    private var committedText: String = ""
 
     // MARK: - 照片
     var showPhotoPicker = false
@@ -62,6 +64,16 @@ final class MainRecordViewModel {
                 self?.speechState = state
                 if case .completed(let text) = state {
                     self?.inputText += text
+                }
+            }
+        }
+
+        // 设置部分识别结果回调（实时显示）
+        if let appleSpeech = speechService as? AppleSpeechService {
+            appleSpeech.partialTextHandler = { [weak self] partialText in
+                Task { @MainActor in
+                    // 实时更新输入文本（替换当前的部分文本）
+                    self?.inputText = (self?.committedText ?? "") + partialText
                 }
             }
         }
@@ -101,6 +113,8 @@ final class MainRecordViewModel {
         if speechState == .listening {
             _ = try? await speechService.stopListening()
         } else {
+            // 保存当前文本作为已提交文本
+            committedText = inputText
             do {
                 try await speechService.startListening()
             } catch {

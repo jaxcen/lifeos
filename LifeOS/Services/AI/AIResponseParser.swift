@@ -16,7 +16,7 @@ struct AIResponseParser {
         return almanac
     }
 
-    // MARK: - 解析今日侧写日记
+    // MARK: - 解析今日观察日记
 
     static func parseDailyDiary(_ response: String, date: Date = Date()) throws -> AIDiary {
         let json = try extractJSON(from: response)

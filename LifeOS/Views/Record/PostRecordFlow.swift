@@ -42,7 +42,7 @@ struct PostRecordFlow: View {
         VStack(spacing: Layout.spacingXXL) {
             Spacer()
 
-            AIGeneratingView(message: "正在写今天的侧写日记")
+            AIGeneratingView(message: "正在写今天的观察日记")
 
             Text("基于你刚才的记录，为你生成一篇第三人称的观察日记")
                 .font(.lifeCaption)
@@ -105,7 +105,7 @@ struct PostRecordFlow: View {
 
         await MainActor.run {
             isGenerating = false
-            if let diary = service.currentDiary {
+            if let diary = service.currentDiaries.first {
                 generatedDiary = diary
             } else if case .error(let msg) = service.loadingState {
                 errorMessage = msg

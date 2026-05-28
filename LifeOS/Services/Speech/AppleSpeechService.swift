@@ -5,6 +5,8 @@ import Speech
 final class AppleSpeechService: SpeechServiceProtocol {
     private(set) var state: SpeechState = .idle
     private var stateHandler: ((SpeechState) -> Void)?
+    /// 部分识别结果回调
+    var partialTextHandler: ((String) -> Void)?
     private let recognizer = SFSpeechRecognizer(locale: Locale(identifier: "zh-CN"))
     private var recognitionRequest: SFSpeechAudioBufferRecognitionRequest?
     private var recognitionTask: SFSpeechRecognitionTask?
@@ -71,6 +73,11 @@ final class AppleSpeechService: SpeechServiceProtocol {
                             self.updateState(.completed(text))
                             continuation.resume(returning: ())
                         }
+                    } else {
+                        // 实时更新部分识别结果
+                        self.updateState(.listening)
+                        // 通过回调通知上层最新的部分文本
+                        self.partialTextHandler?(text)
                     }
                 }
 

@@ -3,7 +3,7 @@ import Foundation
 /// AI 任务类型
 enum AITaskType: String, CaseIterable {
     case generateDailyAlmanac       // 生成今日老黄历
-    case generateDailyDiary         // 生成今日侧写日记
+    case generateDailyDiary         // 生成今日观察日记
     case generateTomorrowForecast   // 生成明日推演
     case analyzeWeeklyPattern       // 分析 7 天趋势
     case updateLongTermMemory       // 更新长期记忆
@@ -41,7 +41,7 @@ protocol AIServiceProtocol {
         longTermMemory: LongTermMemory?
     ) async throws -> DailyAlmanac
 
-    /// 生成今日侧写日记
+    /// 生成今日观察日记
     func generateDailyDiary(
         userProfile: UserProfile,
         todayEntries: [DailyEntry],

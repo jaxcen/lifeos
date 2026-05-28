@@ -7,6 +7,7 @@ struct VoiceRecordingWaveformView: View {
     let onToggle: () -> Void
 
     @State private var wavePhase: CGFloat = 0
+    @State private var animationTimer: Timer?
 
     var body: some View {
         VStack(spacing: Layout.spacingXL) {
@@ -37,30 +38,46 @@ struct VoiceRecordingWaveformView: View {
                 RoundedRectangle(cornerRadius: 2)
                     .fill(barColor)
                     .frame(width: 3, height: barHeight(for: i))
-                    .animation(
-                        speechState == .listening
-                            ? .easeInOut(duration: 0.3).repeatForever(autoreverses: true).delay(Double(i) * 0.03)
-                            : .default,
-                        value: wavePhase
-                    )
             }
         }
         .frame(maxWidth: .infinity)
         .onChange(of: speechState) { _, newValue in
             if newValue == .listening {
-                wavePhase = 1
+                startAnimation()
             } else {
-                wavePhase = 0
+                stopAnimation()
             }
         }
+    }
+
+    private func startAnimation() {
+        animationTimer?.invalidate()
+        animationTimer = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { _ in
+            withAnimation(.easeInOut(duration: 0.1)) {
+                wavePhase += 0.15
+                if wavePhase > .pi * 2 {
+                    wavePhase -= .pi * 2
+                }
+            }
+        }
+    }
+
+    private func stopAnimation() {
+        animationTimer?.invalidate()
+        animationTimer = nil
+        wavePhase = 0
     }
 
     private func barHeight(for index: Int) -> CGFloat {
         if speechState == .listening {
             let base: CGFloat = 10
             let max: CGFloat = 80
-            let sinValue = sin(wavePhase * .pi + Double(index) * 0.3)
-            return base + (max - base) * CGFloat(abs(sinValue))
+            // 使用多个不同频率的正弦波叠加，产生更自然的动态效果
+            let sin1 = sin(wavePhase + Double(index) * 0.3)
+            let sin2 = sin(wavePhase * 1.5 + Double(index) * 0.2) * 0.5
+            let sin3 = sin(wavePhase * 0.7 + Double(index) * 0.4) * 0.3
+            let combined = (sin1 + sin2 + sin3) / 1.8
+            return base + (max - base) * CGFloat(abs(combined))
         }
         return 10
     }
@@ -97,13 +114,14 @@ struct VoiceRecordingWaveformView: View {
 
     private var recognizedText: some View {
         VStack(alignment: .leading, spacing: Layout.spacingS) {
-            Text("识别内容")
+            Text(speechState == .listening ? "正在识别..." : "识别内容")
                 .font(.lifeCaption)
                 .foregroundStyle(Color.lifeTextSecondary)
 
             Text(inputText)
                 .font(.lifeBody)
                 .foregroundStyle(Color.lifeText)
+                .animation(.easeInOut, value: inputText)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(Layout.spacingM)

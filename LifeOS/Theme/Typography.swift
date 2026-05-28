@@ -32,7 +32,7 @@ extension Font {
     /// 提醒文字
     static let lifeReminder = Font.system(size: 15, weight: .regular)
 
-    /// 侧写日记
+    /// 观察日记
     static let lifeDiary = Font.system(size: 15, weight: .regular)
 
     /// 鼓励语

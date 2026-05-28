@@ -6,7 +6,7 @@ import SwiftData
 final class AIGenerationService {
     var loadingState: HomeLoadingState = .idle
     var currentAlmanac: DailyAlmanac?
-    var currentDiary: AIDiary?
+    var currentDiaries: [AIDiary] = []
     var currentForecast: TomorrowForecast?
 
     private let aiService: AIServiceProtocol
@@ -30,9 +30,10 @@ final class AIGenerationService {
         currentAlmanac = try? modelContext.fetch(descriptor).first
 
         let diaryDescriptor = FetchDescriptor<AIDiary>(
-            predicate: #Predicate { $0.date >= startOfDay && $0.date < endOfDay }
+            predicate: #Predicate { $0.date >= startOfDay && $0.date < endOfDay },
+            sortBy: [SortDescriptor(\.generatedAt, order: .reverse)]
         )
-        currentDiary = try? modelContext.fetch(diaryDescriptor).first
+        currentDiaries = (try? modelContext.fetch(diaryDescriptor)) ?? []
 
         // 预测是针对"明天"的，所以查 forDate == 该日期的下一天
         let tomorrow = calendar.date(byAdding: .day, value: 1, to: startOfDay)!
@@ -97,11 +98,11 @@ final class AIGenerationService {
         }
     }
 
-    // MARK: - 生成侧写日记
+    // MARK: - 生成观察日记
 
     func generateDiary(for date: Date = Date()) async {
         await MainActor.run {
-            loadingState = .loading("正在写今天的侧写日记...")
+            loadingState = .loading("正在写今天的观察日记...")
         }
 
         do {
@@ -123,7 +124,7 @@ final class AIGenerationService {
             print("[AIGen] ✅ 日记生成成功: \(diary.title)")
             await MainActor.run {
                 modelContext.insert(diary)
-                self.currentDiary = diary
+                self.currentDiaries.insert(diary, at: 0)
                 loadingState = .loaded
             }
         } catch {

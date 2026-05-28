@@ -26,9 +26,11 @@ final class HomeViewModel {
     var currentAlmanac: DailyAlmanac? {
         aiGenerationService.currentAlmanac
     }
-    var currentDiary: AIDiary? {
-        aiGenerationService.currentDiary
+    var currentDiaries: [AIDiary] {
+        aiGenerationService.currentDiaries
     }
+    /// 当前选中的日记（用于详情展示）
+    var selectedDiary: AIDiary?
     var currentForecast: TomorrowForecast? {
         aiGenerationService.currentForecast
     }
@@ -123,11 +125,12 @@ final class HomeViewModel {
         await aiGenerationService.generateAlmanac(for: selectedDate)
     }
 
-    // MARK: - 生成侧写日记
+    // MARK: - 生成观察日记
 
     func generateDiary() async {
         await aiGenerationService.generateDiary(for: selectedDate)
-        if currentDiary != nil {
+        if let firstDiary = currentDiaries.first {
+            selectedDiary = firstDiary
             showDiarySheet = true
         }
     }

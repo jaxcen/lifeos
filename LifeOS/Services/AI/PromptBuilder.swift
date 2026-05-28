@@ -124,7 +124,7 @@ struct PromptBuilder {
         return parts.joined(separator: "\n")
     }
 
-    // MARK: - 今日侧写日记 Prompt
+    // MARK: - 今日观察日记 Prompt
 
     static func buildDailyDiaryPrompt(
         userProfile: UserProfile,
@@ -135,9 +135,9 @@ struct PromptBuilder {
     ) -> String {
         var parts: [String] = []
 
-        parts.append("## 任务：生成今日人生侧写日记")
+        parts.append("## 任务：生成今日人生观察日记")
         parts.append("")
-        parts.append("你是一个旁观者，今天一直在观察这个人。现在请以第三人称为他写下今天的侧写日记。")
+        parts.append("你是一个旁观者，今天一直在观察这个人。现在请以第三人称为他写下今天的观察日记。")
         parts.append("")
 
         // 用户画像
@@ -190,7 +190,7 @@ struct PromptBuilder {
         parts.append("""
         ### 请输出
 
-        请以一个温和旁观者的视角，写下今天的侧写日记。
+        请以一个温和旁观者的视角，写下今天的观察日记。
 
         输出格式（严格 JSON）：
         {

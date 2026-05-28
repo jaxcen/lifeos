@@ -51,7 +51,7 @@ struct EmptyStateView: View {
         EmptyStateView(
             icon: "doc.text",
             title: "还没有今日记录",
-            subtitle: "去记录页写下今天的想法，\nAI 就能为你生成侧写日记"
+            subtitle: "去记录页写下今天的想法，\nAI 就能为你生成观察日记"
         )
 
         EmptyStateView(

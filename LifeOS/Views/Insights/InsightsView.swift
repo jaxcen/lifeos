@@ -1,55 +1,72 @@
 import SwiftUI
 import SwiftData
 
-/// 洞察页 - 和紙手帳風，纸堆翻页
+/// 显示模式
+enum DisplayMode: String, CaseIterable {
+    case card
+    case bookshelf
+
+    var icon: String {
+        switch self {
+        case .card: return "square.grid.2x2"
+        case .bookshelf: return "books.vertical"
+        }
+    }
+}
+
+/// 洞察页 - 和紙手帳風
 struct InsightsView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.appDI) private var di
     @State private var viewModel: HomeViewModel?
     @State private var showDatePicker = false
     @State private var pickerDate = Date()
+    @State private var displayMode: DisplayMode = .card
 
     var body: some View {
         NavigationStack {
             ZStack {
-                PaperBackground()
+                if displayMode == .card {
+                    PaperBackground()
+                }
 
                 if let vm = viewModel {
                     VStack(spacing: 0) {
                         // 顶部标题
                         headerSection(vm)
 
-                        // 日期气泡条
-                        DateBubbleStrip(
-                            dates: vm.visibleDates,
-                            selectedIndex: Binding(
-                                get: { vm.selectedIndex },
-                                set: { vm.navigateToIndex($0) }
-                            )
-                        ) { index in
-                            vm.navigateToIndex(index)
-                        }
-                        .padding(.horizontal, Layout.spacingL)
-                        .padding(.vertical, Layout.spacingS)
-                        .onLongPressGesture {
-                            pickerDate = vm.selectedDate
-                            showDatePicker = true
+                        // 日期气泡条（仅卡片模式）
+                        if displayMode == .card {
+                            DateBubbleStrip(
+                                dates: vm.visibleDates,
+                                selectedIndex: Binding(
+                                    get: { vm.selectedIndex },
+                                    set: { vm.navigateToIndex($0) }
+                                )
+                            ) { index in
+                                vm.navigateToIndex(index)
+                            }
+                            .padding(.horizontal, Layout.spacingL)
+                            .padding(.vertical, Layout.spacingS)
+                            .onLongPressGesture {
+                                pickerDate = vm.selectedDate
+                                showDatePicker = true
+                            }
                         }
 
-                        // 垂直纸堆翻页区
-                        VerticalPaperStackView(
-                            dates: vm.visibleDates,
-                            selectedIndex: Binding(
-                                get: { vm.selectedIndex },
-                                set: { vm.navigateToIndex($0) }
-                            )
-                        ) { date, index in
-                            InsightsDayPage(
-                                date: date,
-                                viewModel: vm
-                            )
+                        // 内容区
+                        if displayMode == .card {
+                            ScrollView {
+                                InsightsDayPage(
+                                    date: vm.selectedDate,
+                                    viewModel: vm
+                                )
+                                .padding(.horizontal, Layout.spacingL)
+                                .padding(.bottom, Layout.spacingXL)
+                            }
+                        } else {
+                            BookshelfView(modelContext: modelContext)
                         }
-                        .padding(.horizontal, Layout.spacingL)
                     }
                 }
             }
@@ -58,7 +75,7 @@ struct InsightsView: View {
                 get: { viewModel?.showDiarySheet ?? false },
                 set: { viewModel?.showDiarySheet = $0 }
             )) {
-                if let diary = viewModel?.currentDiary {
+                if let diary = viewModel?.selectedDiary {
                     DiaryDetailView(diary: diary)
                 }
             }
@@ -109,8 +126,31 @@ struct InsightsView: View {
 
     @ViewBuilder
     private func headerSection(_ vm: HomeViewModel) -> some View {
-        VStack(spacing: Layout.spacingXS) {
-            Text("今日手账")
+        VStack(spacing: Layout.spacingS) {
+            // 模式切换
+            HStack(spacing: Layout.spacingS) {
+                ForEach(DisplayMode.allCases, id: \.self) { mode in
+                    Button {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            displayMode = mode
+                        }
+                    } label: {
+                        Image(systemName: mode.icon)
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundStyle(displayMode == mode ? Color.lifeAccent : Color.lifeTextSecondary)
+                            .frame(width: 36, height: 36)
+                            .background(
+                                displayMode == mode
+                                    ? Color.lifeAccent.opacity(0.1)
+                                    : Color.clear
+                            )
+                            .clipShape(RoundedRectangle(cornerRadius: Layout.radiusS))
+                    }
+                }
+            }
+
+            // 标题
+            Text(displayMode == .card ? "今日手账" : "人生书架")
                 .font(.lifeTitle)
                 .foregroundStyle(Color.lifeText)
         }
@@ -141,7 +181,7 @@ struct InsightsDayPage: View {
             // 和纸条分隔
             WashiTapeDivider(color: .washiBlue)
 
-            // 侧写日记
+            // 观察日记
             diarySection
 
             // 和纸条分隔
@@ -183,17 +223,23 @@ struct InsightsDayPage: View {
         }
     }
 
-    // MARK: - 侧写日记
+    // MARK: - 观察日记
 
     @ViewBuilder
     private var diarySection: some View {
         if !isFuture {
-            if let diary = viewModel.currentDiary {
-                DiaryCard(diary: diary)
+            if !viewModel.currentDiaries.isEmpty {
+                ForEach(viewModel.currentDiaries, id: \.id) { diary in
+                    DiaryCard(diary: diary)
+                        .onTapGesture {
+                            viewModel.selectedDiary = diary
+                            viewModel.showDiarySheet = true
+                        }
+                }
             } else if viewModel.currentAlmanac != nil && viewModel.hasEntriesForSelectedDate {
                 generateButton(
                     icon: "doc.text",
-                    text: isToday ? "生成侧写日记" : "为这天生成日记",
+                    text: isToday ? "生成观察日记" : "为这天生成日记",
                     color: .lifeAccent
                 ) {
                     Task { await viewModel.generateDiary() }

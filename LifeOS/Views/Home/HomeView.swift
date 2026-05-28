@@ -24,7 +24,7 @@ struct HomeView: View {
                     // 今日记录入口
                     recordEntryButton
 
-                    // 侧写日记
+                    // 观察日记
                     diarySection
 
                     // 明日推演
@@ -42,7 +42,7 @@ struct HomeView: View {
                 get: { viewModel?.showDiarySheet ?? false },
                 set: { viewModel?.showDiarySheet = $0 }
             )) {
-                if let diary = viewModel?.currentDiary {
+                if let diary = viewModel?.selectedDiary {
                     DiaryDetailView(diary: diary)
                 }
             }
@@ -117,12 +117,18 @@ struct HomeView: View {
         }
     }
 
-    // MARK: - 侧写日记区域
+    // MARK: - 观察日记区域
 
     @ViewBuilder
     private var diarySection: some View {
-        if let diary = viewModel?.currentDiary {
-            DiaryCard(diary: diary)
+        if let vm = viewModel, !vm.currentDiaries.isEmpty {
+            ForEach(vm.currentDiaries, id: \.id) { diary in
+                DiaryCard(diary: diary)
+                    .onTapGesture {
+                        vm.selectedDiary = diary
+                        vm.showDiarySheet = true
+                    }
+            }
         } else if viewModel?.currentAlmanac != nil {
             Button {
                 Task {
@@ -132,7 +138,7 @@ struct HomeView: View {
                 HStack(spacing: Layout.spacingS) {
                     Image(systemName: "doc.text")
                         .font(.system(size: 14))
-                    Text("生成今日侧写日记")
+                    Text("生成今日观察日记")
                         .font(.lifeBodyEmphasis)
                 }
                 .foregroundStyle(Color.lifeAccent)
