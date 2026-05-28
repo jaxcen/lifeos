@@ -12,7 +12,7 @@ struct VoiceRecordingWaveformView: View {
         VStack(spacing: Layout.spacingXL) {
             // 波形动画
             waveformDisplay
-                .frame(height: 120)
+                .frame(height: 160)
 
             // 录音按钮
             recordButton

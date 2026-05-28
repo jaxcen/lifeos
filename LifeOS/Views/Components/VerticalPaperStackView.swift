@@ -14,10 +14,11 @@ struct VerticalPaperStackView<Content: View, T: Hashable>: View {
     var body: some View {
         GeometryReader { geo in
             ZStack {
-                // 底层纸边 (从下往上)
+                // 底层纸边 (从下往上) - 文件夹层叠效果
                 ForEach(Array(stackLayers.enumerated()), id: \.offset) { layerIndex, layerOffset in
                     paperEdge(
-                        height: geo.size.height - CGFloat(stackDepth - layerIndex) * 14,
+                        width: geo.size.width - CGFloat(layerIndex) * 8,
+                        height: geo.size.height - CGFloat(stackDepth - layerIndex) * 20,
                         offset: layerOffset,
                         depth: layerIndex
                     )
@@ -28,11 +29,11 @@ struct VerticalPaperStackView<Content: View, T: Hashable>: View {
                     content(items[selectedIndex], selectedIndex)
                         .frame(width: geo.size.width, height: geo.size.height)
                         .offset(y: dragOffset)
-                        .scaleEffect(1.0 - abs(dragOffset) * 0.0002)
+                        .scaleEffect(1.0 - abs(dragOffset) * 0.0003)
                         .shadow(
-                            color: .black.opacity(dragOffset == 0 ? 0.06 : 0.12),
-                            radius: dragOffset == 0 ? 12 : 24,
-                            y: dragOffset == 0 ? 3 : 10
+                            color: .black.opacity(dragOffset == 0 ? 0.1 : 0.2),
+                            radius: dragOffset == 0 ? 16 : 32,
+                            y: dragOffset == 0 ? 4 : 12
                         )
                         .gesture(
                             DragGesture(minimumDistance: 20)
@@ -44,7 +45,7 @@ struct VerticalPaperStackView<Content: View, T: Hashable>: View {
                                     let threshold = geo.size.height * 0.20
                                     let velocity = value.predictedEndTranslation.height
 
-                                    withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
+                                    withAnimation(.spring(response: Layout.springResponse, dampingFraction: Layout.springDamping)) {
                                         if (dragOffset < -threshold || velocity < -200) && selectedIndex < items.count - 1 {
                                             // 向上翻 - 下一天
                                             selectedIndex += 1
@@ -63,19 +64,23 @@ struct VerticalPaperStackView<Content: View, T: Hashable>: View {
         }
     }
 
-    /// 底层纸边
-    private func paperEdge(height: CGFloat, offset: CGFloat, depth: Int) -> some View {
+    /// 底层纸边 - 文件夹层叠效果
+    private func paperEdge(width: CGFloat, height: CGFloat, offset: CGFloat, depth: Int) -> some View {
         RoundedRectangle(cornerRadius: Layout.cardCornerRadius)
-            .fill(Color.lifeCardBackground.opacity(0.6 - Double(depth) * 0.12))
-            .frame(height: height)
+            .fill(Color.lifeCardBackground)
+            .frame(width: width, height: height)
             .offset(y: offset)
-            .shadow(color: .black.opacity(0.02 + Double(depth) * 0.01), radius: 4, y: 2)
+            .shadow(
+                color: .black.opacity(0.08 + Double(depth) * 0.04),
+                radius: 8 + Double(depth) * 4,
+                y: 2 + Double(depth) * 2
+            )
     }
 
-    /// 纸堆层次偏移
+    /// 纸堆层次偏移 - 更明显的层叠效果
     private var stackLayers: [CGFloat] {
         (0..<stackDepth).map { i in
-            CGFloat(i + 1) * Layout.verticalStackOffset + 10
+            CGFloat(i + 1) * Layout.verticalStackOffset + 15
         }
     }
 }

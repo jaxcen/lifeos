@@ -89,17 +89,22 @@ final class HomeViewModel {
         return 3
     }
 
+    /// 导航到指定索引
+    func navigateToIndex(_ index: Int) {
+        guard index >= 0 && index < visibleDates.count else { return }
+        let calendar = Calendar.current
+        let center = calendar.startOfDay(for: selectedDate)
+        if let newDate = calendar.date(byAdding: .day, value: index - 3, to: center) {
+            selectedDate = newDate
+            loadData(for: newDate)
+        }
+    }
+
     // MARK: - 导航
 
     func navigateToDate(_ date: Date) {
         selectedDate = date
         loadData(for: date)
-    }
-
-    func navigateToIndex(_ index: Int) {
-        guard index >= 0 && index < visibleDates.count else { return }
-        selectedDate = visibleDates[index]
-        loadData(for: selectedDate)
     }
 
     // MARK: - 加载数据

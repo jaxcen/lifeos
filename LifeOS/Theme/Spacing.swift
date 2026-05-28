@@ -28,11 +28,16 @@ enum Layout {
     static let pageStackScale: CGFloat = 0.97
     static let pageIndicatorHeight: CGFloat = 32
 
-    // MARK: - 和纸条
+    // MARK: - 装饰条
     static let washiStripHeight: CGFloat = 20
     static let washiStripRotation: Double = 1.5
 
     // MARK: - 垂直纸堆
     static let verticalStackOffset: CGFloat = 8
     static let verticalStackDepth: Int = 3
+
+    // MARK: - 动画
+    static let animationDuration: Double = 0.3
+    static let springResponse: Double = 0.35
+    static let springDamping: Double = 0.85
 }

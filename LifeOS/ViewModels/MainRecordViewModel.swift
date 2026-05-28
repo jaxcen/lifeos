@@ -101,7 +101,13 @@ final class MainRecordViewModel {
         if speechState == .listening {
             _ = try? await speechService.stopListening()
         } else {
-            try? await speechService.startListening()
+            do {
+                try await speechService.startListening()
+            } catch {
+                await MainActor.run {
+                    speechState = .error("语音识别启动失败: \(error.localizedDescription)")
+                }
+            }
         }
     }
 

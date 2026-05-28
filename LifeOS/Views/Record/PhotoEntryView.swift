@@ -92,7 +92,7 @@ struct PhotoEntryView: View {
                     .foregroundStyle(Color.lifeTextSecondary)
             }
             .frame(maxWidth: .infinity)
-            .frame(height: 200)
+            .frame(height: 280)
             .background(Color.lifeAccent.opacity(0.05))
             .clipShape(RoundedRectangle(cornerRadius: Layout.radiusM))
         }

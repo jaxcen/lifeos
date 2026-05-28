@@ -27,6 +27,12 @@ final class AppleSpeechService: SpeechServiceProtocol {
             throw SpeechServiceError.notAvailable
         }
 
+        // 检查权限
+        let granted = await requestPermission()
+        guard granted else {
+            throw SpeechServiceError.notAuthorized
+        }
+
         // 取消之前的任务
         recognitionTask?.cancel()
         recognitionTask = nil

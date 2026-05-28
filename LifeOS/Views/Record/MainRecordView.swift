@@ -26,9 +26,6 @@ struct MainRecordView: View {
 
                         // 输入区域
                         inputArea
-
-                        // 问卷（可折叠）
-                        questionnaireToggle
                     }
                     .padding(Layout.spacingL)
                     .padding(.bottom, Layout.spacingXL)
@@ -161,7 +158,7 @@ struct MainRecordView: View {
             .font(.lifeBody)
             .foregroundStyle(Color.lifeText)
             .scrollContentBackground(.hidden)
-            .frame(minHeight: 120)
+            .frame(minHeight: 200)
             .padding(.horizontal, Layout.spacingM)
             .overlay(alignment: .topLeading) {
                 if viewModel?.inputText.isEmpty ?? true {
@@ -318,65 +315,6 @@ struct MainRecordView: View {
             }
         }
         .animation(.easeInOut(duration: 0.2), value: viewModel?.canSave ?? false)
-    }
-
-    // MARK: - 问卷
-
-    private var questionnaireToggle: some View {
-        VStack(spacing: 0) {
-            Button {
-                withAnimation(.easeInOut(duration: 0.2)) {
-                    viewModel?.showQuestionnaire.toggle()
-                }
-            } label: {
-                HStack {
-                    Image(systemName: "slider.horizontal.3")
-                        .foregroundStyle(Color.lifeAccent)
-                    Text("今日状态")
-                        .font(.lifeBodyEmphasis)
-                        .foregroundStyle(Color.lifeText)
-                    Spacer()
-                    Image(systemName: viewModel?.showQuestionnaire == true ? "chevron.up" : "chevron.down")
-                        .foregroundStyle(Color.lifeTextSecondary)
-                }
-                .padding(Layout.spacingM)
-            }
-
-            if viewModel?.showQuestionnaire == true {
-                if let q = viewModel?.questionnaire {
-                    VStack(spacing: Layout.spacingM) {
-                        QuestionnaireSliderRow(
-                            title: "精力",
-                            icon: "bolt",
-                            value: Binding(get: { q.energyLevel }, set: { q.energyLevel = $0 }),
-                            color: .lifeYi
-                        )
-                        QuestionnaireSliderRow(
-                            title: "心情",
-                            icon: "heart",
-                            value: Binding(get: { q.moodScore }, set: { q.moodScore = $0 }),
-                            color: .moodCalm
-                        )
-                        QuestionnaireSliderRow(
-                            title: "睡眠",
-                            icon: "moon",
-                            value: Binding(get: { q.sleepQuality }, set: { q.sleepQuality = $0 }),
-                            color: .moodReflective
-                        )
-                        QuestionnaireSliderRow(
-                            title: "压力",
-                            icon: "brain.head.profile",
-                            value: Binding(get: { q.stressLevel }, set: { q.stressLevel = $0 }),
-                            color: .moodAnxious
-                        )
-                    }
-                    .padding(.horizontal, Layout.spacingM)
-                    .padding(.bottom, Layout.spacingM)
-                    .transition(.opacity.combined(with: .move(edge: .top)))
-                }
-            }
-        }
-        .lifeCard(padding: 0)
     }
 
     // MARK: - 保存提示

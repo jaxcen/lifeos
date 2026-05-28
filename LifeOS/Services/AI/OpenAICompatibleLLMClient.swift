@@ -58,10 +58,10 @@ final class OpenAICompatibleLLMClient: LLMClientProtocol {
         let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
         let choices = json?["choices"] as? [[String: Any]]
         let message = choices?.first?["message"] as? [String: Any]
-        // mimo-v2.5 可能将内容放在 reasoning_content 中
-        let content = message?["content"] as? String
-            ?? message?["reasoning_content"] as? String
-            ?? ""
+        // mimo-v2.5 是推理模型，可能将内容放在 reasoning_content 中
+        let rawContent = message?["content"] as? String ?? ""
+        let reasoningContent = message?["reasoning_content"] as? String ?? ""
+        let content = rawContent.isEmpty ? reasoningContent : rawContent
 
         print("[LLM] ✅ 响应内容: \(content.prefix(200))")
 

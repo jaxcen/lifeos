@@ -1,51 +1,51 @@
 import SwiftUI
 
-/// 设计系统 - 颜色 (和紙手帳風)
+/// 设计系统 - 颜色 (简约现代风)
 extension Color {
     // MARK: - 主色调
-    /// 暖 parchment cream - 主背景
-    static let lifeBackground = Color(hex: "F7F3ED")
-    /// 暖纸白 - 卡片背景
-    static let lifeCardBackground = Color(hex: "FFFCF7")
-    /// 赭石 - 主强调色 (印章色)
-    static let lifeAccent = Color(hex: "C4956A")
-    /// 暖深棕 - 文字
-    static let lifeText = Color(hex: "3D3529")
-    /// 暖灰褐 - 次要文字
-    static let lifeTextSecondary = Color(hex: "9E9485")
+    /// 浅灰白 - 主背景
+    static let lifeBackground = Color(hex: "F5F5F7")
+    /// 纯白 - 卡片背景
+    static let lifeCardBackground = Color(hex: "FFFFFF")
+    /// 深靛蓝 - 主强调色
+    static let lifeAccent = Color(hex: "5856D6")
+    /// 深灰 - 文字
+    static let lifeText = Color(hex: "1D1D1F")
+    /// 中灰 - 次要文字
+    static let lifeTextSecondary = Color(hex: "86868B")
 
     // MARK: - 功能色
-    /// 鼠尾草绿 - 宜/正面
-    static let lifeYi = Color(hex: "8BAF7E")
-    /// 暖琥珀 - 忌/注意
-    static let lifeJi = Color(hex: "D4916B")
-    /// 和紙棕 - 提醒
-    static let lifeReminder = Color(hex: "B8A089")
+    /// 翠绿 - 宜/正面
+    static let lifeYi = Color(hex: "34C759")
+    /// 珊瑚橙 - 忌/注意
+    static let lifeJi = Color(hex: "FF9500")
+    /// 浅紫 - 提醒
+    static let lifeReminder = Color(hex: "AF52DE")
 
     // MARK: - 情绪色
-    static let moodCalm = Color(hex: "A8D8EA")
-    static let moodEnergetic = Color(hex: "FFD3B6")
-    static let moodReflective = Color(hex: "D5C4E0")
-    static let moodAnxious = Color(hex: "FFB7B2")
-    static let moodHappy = Color(hex: "C1E1C1")
+    static let moodCalm = Color(hex: "5AC8FA")
+    static let moodEnergetic = Color(hex: "FF9F0A")
+    static let moodReflective = Color(hex: "BF5AF2")
+    static let moodAnxious = Color(hex: "FF453A")
+    static let moodHappy = Color(hex: "30D158")
 
     // MARK: - 卡片渐变
-    static let cardGradientStart = Color(hex: "FFFCF7")
-    static let cardGradientEnd = Color(hex: "F9F4ED")
+    static let cardGradientStart = Color(hex: "FFFFFF")
+    static let cardGradientEnd = Color(hex: "F5F5F7")
 
-    // MARK: - 和紙風 (Washi Style)
-    /// 牛皮纸棕 - 和纸条
-    static let washiTan = Color(hex: "D4A574")
-    /// 雾蓝 - 和纸条
-    static let washiBlue = Color(hex: "9BB5C4")
-    /// 玫瑰灰 - 和纸条
-    static let washiRose = Color(hex: "C9A0B0")
-    /// 纸纹叠加色 (用于 grain 效果)
-    static let paperGrain = Color(hex: "E8DFD3")
-    /// 略暖的纸色 - 用于日记卡片
-    static let paperWarm = Color(hex: "FFF8F0")
-    /// 略冷的纸色 - 用于预测卡片
-    static let paperCool = Color(hex: "F5F3F0")
+    // MARK: - 装饰色
+    /// 浅蓝 - 装饰条
+    static let washiTan = Color(hex: "64D2FF")
+    /// 雾蓝 - 装饰条
+    static let washiBlue = Color(hex: "5AC8FA")
+    /// 玫瑰灰 - 装饰条
+    static let washiRose = Color(hex: "FF6B9D")
+    /// 纹理叠加色
+    static let paperGrain = Color(hex: "E5E5EA")
+    /// 暖白 - 用于日记卡片
+    static let paperWarm = Color(hex: "FAFAFA")
+    /// 冷白 - 用于预测卡片
+    static let paperCool = Color(hex: "F2F2F7")
 }
 
 // MARK: - Hex 颜色初始化

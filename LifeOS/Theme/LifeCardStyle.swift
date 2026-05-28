@@ -1,8 +1,8 @@
 import SwiftUI
 
-// MARK: - 纸质卡片样式
+// MARK: - 现代卡片样式
 
-/// 纸质卡片修饰符 - 带纸纹和暖色阴影
+/// 现代卡片修饰符 - 简洁白色卡片
 struct PaperCardModifier: ViewModifier {
     var padding: CGFloat = Layout.cardPadding
     var tintColor: Color = .lifeCardBackground
@@ -11,57 +11,15 @@ struct PaperCardModifier: ViewModifier {
         content
             .padding(padding)
             .background(
-                ZStack {
-                    // 基底纸色
-                    RoundedRectangle(cornerRadius: Layout.cardCornerRadius)
-                        .fill(tintColor)
-
-                    // 对角渐变 - 模拟纸张吸墨不均
-                    RoundedRectangle(cornerRadius: Layout.cardCornerRadius)
-                        .fill(
-                            LinearGradient(
-                                colors: [
-                                    tintColor.opacity(0),
-                                    Color.paperGrain.opacity(0.06)
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-
-                    // 纸纹 grain 效果
-                    PaperGrainView()
-                        .clipShape(RoundedRectangle(cornerRadius: Layout.cardCornerRadius))
-                }
+                RoundedRectangle(cornerRadius: Layout.cardCornerRadius)
+                    .fill(tintColor)
             )
             .clipShape(RoundedRectangle(cornerRadius: Layout.cardCornerRadius))
             .shadow(
-                color: .black.opacity(0.06),
+                color: .black.opacity(0.08),
                 radius: Layout.cardShadowRadius,
                 y: Layout.cardShadowY
             )
-    }
-}
-
-/// 纸纹 grain 效果 - 细微纹理叠加
-struct PaperGrainView: View {
-    var body: some View {
-        Canvas { context, size in
-            // 用随机散布的小矩形模拟纸张纤维
-            let grainCount = 60
-            for _ in 0..<grainCount {
-                let x = CGFloat.random(in: 0..<size.width)
-                let y = CGFloat.random(in: 0..<size.height)
-                let w = CGFloat.random(in: 1...3)
-                let h = CGFloat.random(in: 1...2)
-                let rect = CGRect(x: x, y: y, width: w, height: h)
-                context.fill(
-                    Path(ellipseIn: rect),
-                    with: .color(Color.paperGrain.opacity(Double.random(in: 0.03...0.07)))
-                )
-            }
-        }
-        .allowsHitTesting(false)
     }
 }
 
@@ -76,7 +34,7 @@ struct LifeCardModifier: ViewModifier {
 }
 
 extension View {
-    /// 新版纸质卡片样式
+    /// 新版卡片样式
     func paperCard(padding: CGFloat = Layout.cardPadding, tint: Color = .lifeCardBackground) -> some View {
         modifier(PaperCardModifier(padding: padding, tintColor: tint))
     }
