@@ -26,9 +26,7 @@ struct ForecastDetailView: View {
                             .font(.lifeCaption)
                             .foregroundStyle(Color.lifeTextSecondary)
 
-                        Text(forecast.predictedEnergy)
-                            .font(.lifeBody)
-                            .foregroundStyle(Color.lifeText)
+                        MarkdownText(forecast.predictedEnergy, font: .lifeBody, color: .lifeText)
                     }
 
                     // 最佳时间段
@@ -53,9 +51,7 @@ struct ForecastDetailView: View {
                                 .font(.lifeCaption)
                                 .foregroundStyle(Color.lifeJi)
 
-                            Text(risk)
-                                .font(.lifeBody)
-                                .foregroundStyle(Color.lifeJi)
+                            MarkdownText(risk, font: .lifeBody, color: .lifeJi)
                         }
                         .padding()
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -78,9 +74,7 @@ struct ForecastDetailView: View {
                                     .background(Color.lifeAccent)
                                     .clipShape(Circle())
 
-                                Text(action)
-                                    .font(.lifeBody)
-                                    .foregroundStyle(Color.lifeText)
+                                MarkdownText(action, font: .lifeBody, color: .lifeText)
                             }
                         }
                     }
@@ -91,17 +85,13 @@ struct ForecastDetailView: View {
                             .font(.lifeCaption)
                             .foregroundStyle(Color.lifeTextSecondary)
 
-                        Text(forecast.focusSuggestion)
-                            .font(.lifeBody)
-                            .foregroundStyle(Color.lifeText)
+                        MarkdownText(forecast.focusSuggestion, font: .lifeBody, color: .lifeText)
                     }
 
                     Divider()
 
                     // 一句话
-                    Text(forecast.oneLineAdvice)
-                        .font(.lifeEncouragement)
-                        .foregroundStyle(Color.lifeAccent)
+                    MarkdownText(forecast.oneLineAdvice, font: .lifeEncouragement, color: .lifeAccent)
                         .frame(maxWidth: .infinity, alignment: .center)
                 }
                 .padding(Layout.spacingXL)

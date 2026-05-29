@@ -23,9 +23,7 @@ struct ForecastCard: View {
                     .font(.system(size: 12))
                     .foregroundStyle(Color.lifeAccent)
                     .padding(.top, 2)
-                Text(forecast.predictedEnergy)
-                    .font(.lifeBody)
-                    .foregroundStyle(Color.lifeText)
+                MarkdownText(forecast.predictedEnergy, font: .lifeBody, color: .lifeText)
             }
 
             // 风险提示 - 和纸条横幅风
@@ -35,9 +33,7 @@ struct ForecastCard: View {
                         .font(.system(size: 12))
                         .foregroundStyle(Color.lifeJi)
                         .padding(.top, 2)
-                    Text(risk)
-                        .font(.lifeCaption)
-                        .foregroundStyle(Color.lifeJi)
+                    MarkdownText(risk, font: .lifeCaption, color: .lifeJi)
                 }
                 .padding(Layout.spacingM)
                 .background(
@@ -65,9 +61,7 @@ struct ForecastCard: View {
                                         .fill(Color.lifeAccent.opacity(0.7))
                                 )
 
-                            Text(action)
-                                .font(.lifeCaption)
-                                .foregroundStyle(Color.lifeText)
+                            MarkdownText(action, font: .lifeCaption, color: .lifeText)
                         }
                     }
                 }
@@ -77,11 +71,8 @@ struct ForecastCard: View {
             if !forecast.oneLineAdvice.isEmpty {
                 WashiTapeDivider(color: .washiRose, width: 60)
 
-                Text(forecast.oneLineAdvice)
-                    .font(.lifeEncouragement)
-                    .foregroundStyle(Color.lifeAccent)
+                MarkdownText(forecast.oneLineAdvice, font: .lifeEncouragement, color: .lifeAccent)
                     .frame(maxWidth: .infinity, alignment: .center)
-                    .italic()
             }
         }
         .paperCard(tint: .paperCool)

@@ -79,7 +79,7 @@ final class RecordViewModel {
             Task { @MainActor in
                 self?.speechState = state
                 if case .completed(let text) = state {
-                    self?.inputText += text
+                    self?.inputText = (self?.committedText ?? "") + text
                 }
             }
         }
