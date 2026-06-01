@@ -8,6 +8,8 @@ struct ProfileView: View {
     @Query private var entries: [DailyEntry]
     @State private var showProfileSetup = false
     @State private var showGrowthTrajectory = false
+    @State private var showLogin = false
+    @State private var authService = AuthService()
 
     private var profile: UserProfile? { profiles.first }
 
@@ -15,6 +17,9 @@ struct ProfileView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: Layout.spacingL) {
+                    // 账号登录/状态
+                    accountSection
+
                     // 画像引导
                     if profile == nil || !(profile?.isProfileComplete ?? false) {
                         profileSetupBanner
@@ -45,7 +50,87 @@ struct ProfileView: View {
             .navigationDestination(isPresented: $showGrowthTrajectory) {
                 GrowthTrajectoryView()
             }
+            .sheet(isPresented: $showLogin) {
+                LoginView()
+            }
         }
+    }
+
+    // MARK: - 账号区域
+
+    private var accountSection: some View {
+        VStack(spacing: Layout.spacingM) {
+            if authService.isAuthenticated {
+                // 已登录状态
+                HStack(spacing: Layout.spacingL) {
+                    Image(systemName: "person.circle.fill")
+                        .font(.system(size: 44))
+                        .foregroundStyle(Color.lifeAccent)
+
+                    VStack(alignment: .leading, spacing: Layout.spacingXS) {
+                        Text("已登录")
+                            .font(.lifeBodyEmphasis)
+                            .foregroundStyle(Color.lifeText)
+                        Text(formatPhone(authService.storedPhone))
+                            .font(.lifeCaption)
+                            .foregroundStyle(Color.lifeTextSecondary)
+                    }
+
+                    Spacer()
+
+                    Button("退出") {
+                        Task {
+                            await authService.signOut()
+                        }
+                    }
+                    .font(.lifeCaption)
+                    .foregroundStyle(Color.lifeTextSecondary)
+                }
+                .padding(Layout.spacingL)
+                .background(Color.lifeCardBackground)
+                .clipShape(RoundedRectangle(cornerRadius: Layout.radiusM))
+                .shadow(color: .black.opacity(0.04), radius: 4, y: 1)
+            } else {
+                // 未登录状态
+                Button { showLogin = true } label: {
+                    HStack(spacing: Layout.spacingL) {
+                        Image(systemName: "person.circle")
+                            .font(.system(size: 44))
+                            .foregroundStyle(Color.lifeAccent)
+
+                        VStack(alignment: .leading, spacing: Layout.spacingXS) {
+                            Text("登录账号")
+                                .font(.lifeBodyEmphasis)
+                                .foregroundStyle(Color.lifeText)
+                            Text("登录后数据可云端同步")
+                                .font(.lifeCaption)
+                                .foregroundStyle(Color.lifeTextSecondary)
+                        }
+
+                        Spacer()
+
+                        Image(systemName: "chevron.right")
+                            .foregroundStyle(Color.lifeTextSecondary)
+                    }
+                    .padding(Layout.spacingL)
+                    .background(Color.lifeAccent.opacity(0.06))
+                    .clipShape(RoundedRectangle(cornerRadius: Layout.radiusM))
+                }
+            }
+        }
+    }
+
+    /// 格式化手机号显示
+    private func formatPhone(_ phone: String?) -> String {
+        guard let phone = phone else { return "" }
+        // 如果是 "+86 13800138000" 格式，只显示后四位
+        if phone.hasPrefix("+86 ") {
+            let number = String(phone.dropFirst(4))
+            if number.count == 11 {
+                return "****" + String(number.suffix(4))
+            }
+        }
+        return phone
     }
 
     // MARK: - 画像引导
