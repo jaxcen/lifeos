@@ -51,7 +51,7 @@ struct ProfileView: View {
                 GrowthTrajectoryView()
             }
             .sheet(isPresented: $showLogin) {
-                LoginView()
+                LoginView(authService: authService)
             }
         }
     }
@@ -71,7 +71,7 @@ struct ProfileView: View {
                         Text("已登录")
                             .font(.lifeBodyEmphasis)
                             .foregroundStyle(Color.lifeText)
-                        Text(formatPhone(authService.storedPhone))
+                        Text(formatEmail(authService.storedEmail))
                             .font(.lifeCaption)
                             .foregroundStyle(Color.lifeTextSecondary)
                     }
@@ -120,17 +120,20 @@ struct ProfileView: View {
         }
     }
 
-    /// 格式化手机号显示
-    private func formatPhone(_ phone: String?) -> String {
-        guard let phone = phone else { return "" }
-        // 如果是 "+86 13800138000" 格式，只显示后四位
-        if phone.hasPrefix("+86 ") {
-            let number = String(phone.dropFirst(4))
-            if number.count == 11 {
-                return "****" + String(number.suffix(4))
-            }
+    /// 格式化邮箱显示（隐藏中间部分）
+    private func formatEmail(_ email: String?) -> String {
+        guard let email = email else { return "" }
+        let parts = email.split(separator: "@")
+        guard parts.count == 2 else { return email }
+        let localPart = String(parts[0])
+        let domain = String(parts[1])
+
+        // 显示前2位 + *** + @域名
+        if localPart.count > 2 {
+            let prefix = String(localPart.prefix(2))
+            return "\(prefix)***@\(domain)"
         }
-        return phone
+        return email
     }
 
     // MARK: - 画像引导

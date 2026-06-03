@@ -164,6 +164,7 @@ struct InsightsView: View {
 struct InsightsDayPage: View {
     let date: Date
     let viewModel: HomeViewModel
+    @Query private var allEntries: [DailyEntry]
 
     private var isToday: Bool {
         Calendar.current.isDateInToday(date)
@@ -173,8 +174,30 @@ struct InsightsDayPage: View {
         date > Date()
     }
 
+    /// 当天的记录
+    private var todayEntries: [DailyEntry] {
+        let calendar = Calendar.current
+        let startOfDay = calendar.startOfDay(for: date)
+        let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay)!
+        return allEntries.filter { $0.date >= startOfDay && $0.date < endOfDay }
+            .sorted { $0.createdAt < $1.createdAt }
+    }
+
+    init(date: Date, viewModel: HomeViewModel) {
+        self.date = date
+        self.viewModel = viewModel
+        // 初始化 Query 以获取所有 DailyEntry
+        _allEntries = Query(sort: [SortDescriptor(\DailyEntry.createdAt, order: .reverse)])
+    }
+
     var body: some View {
         VStack(spacing: Layout.spacingL) {
+            // 用户原始记录
+            if !todayEntries.isEmpty {
+                entriesSection
+                WashiTapeDivider(color: .washiGreen)
+            }
+
             // 锦囊卡片
             tipsSection
 
@@ -195,6 +218,31 @@ struct InsightsDayPage: View {
         .onAppear {
             viewModel.loadData(for: date)
         }
+    }
+
+    // MARK: - 用户记录
+
+    @ViewBuilder
+    private var entriesSection: some View {
+        VStack(alignment: .leading, spacing: Layout.spacingM) {
+            HStack {
+                Image(systemName: "pencil.line")
+                    .font(.system(size: 14))
+                    .foregroundStyle(Color.lifeAccent)
+                Text("今日手账")
+                    .font(.lifeBodyEmphasis)
+                    .foregroundStyle(Color.lifeText)
+                Spacer()
+                Text("\(todayEntries.count)条记录")
+                    .font(.lifeCaption)
+                    .foregroundStyle(Color.lifeTextSecondary)
+            }
+
+            ForEach(todayEntries, id: \.id) { entry in
+                EntryCard(entry: entry)
+            }
+        }
+        .paperCard()
     }
 
     // MARK: - 锦囊
@@ -349,6 +397,88 @@ struct InsightsDayPage: View {
             .clipShape(RoundedRectangle(cornerRadius: Layout.radiusM))
         }
         .paperCard(padding: 0)
+    }
+}
+
+// MARK: - 记录卡片
+
+struct EntryCard: View {
+    let entry: DailyEntry
+    @State private var photoImage: UIImage?
+
+    private var formattedTime: String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm"
+        return formatter.string(from: entry.createdAt)
+    }
+
+    private var entryIcon: String {
+        switch entry.entryType {
+        case "voice": return "mic.fill"
+        case "photo": return "camera.fill"
+        case "template": return "doc.text"
+        default: return "pencil"
+        }
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Layout.spacingS) {
+            // 头部：时间 + 类型
+            HStack {
+                Image(systemName: entryIcon)
+                    .font(.system(size: 12))
+                    .foregroundStyle(Color.lifeAccent)
+                Text(formattedTime)
+                    .font(.lifeCaption)
+                    .foregroundStyle(Color.lifeTextSecondary)
+
+                if let templateName = entry.templateName {
+                    Text("·")
+                        .foregroundStyle(Color.lifeTextSecondary)
+                    Text(templateName)
+                        .font(.lifeCaption)
+                        .foregroundStyle(Color.lifeAccent)
+                }
+
+                Spacer()
+            }
+
+            // 内容
+            Text(entry.content)
+                .font(.lifeBody)
+                .foregroundStyle(Color.lifeText)
+                .lineLimit(4)
+
+            // 照片（如果有）
+            if let photoPath = entry.photoFilePath {
+                if let image = photoImage {
+                    Image(uiImage: image)
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(maxHeight: 120)
+                        .clipShape(RoundedRectangle(cornerRadius: Layout.radiusS))
+                } else {
+                    RoundedRectangle(cornerRadius: Layout.radiusS)
+                        .fill(Color.lifeTextSecondary.opacity(0.1))
+                        .frame(height: 80)
+                        .overlay {
+                            Image(systemName: "photo")
+                                .foregroundStyle(Color.lifeTextSecondary)
+                        }
+                        .onAppear {
+                            loadPhoto(path: photoPath)
+                        }
+                }
+            }
+        }
+        .padding(Layout.spacingM)
+        .background(Color.lifeCardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: Layout.radiusM))
+    }
+
+    private func loadPhoto(path: String) {
+        let photoStorage = PhotoStorageService()
+        photoImage = photoStorage.loadPhoto(path: path)
     }
 }
 

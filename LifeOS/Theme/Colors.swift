@@ -14,6 +14,15 @@ extension Color {
     /// 中灰 - 次要文字
     static let lifeTextSecondary = Color(hex: "86868B")
 
+    // MARK: - 首页柔光主题
+    static let lifeMistBackground = Color(hex: "F7F8FF")
+    static let lifeLavenderMist = Color(hex: "E9E8FF")
+    static let lifeSoftLavender = Color(hex: "DCD9FF")
+    static let lifeSoftPeach = Color(hex: "FFE6D7")
+    static let lifeSoftSky = Color(hex: "DDEEFF")
+    static let lifeVoiceAccent = Color(hex: "F28D63")
+    static let lifePhotoAccent = Color(hex: "6EA7E8")
+
     // MARK: - 功能色
     /// 翠绿 - 宜/正面
     static let lifeYi = Color(hex: "34C759")
@@ -40,6 +49,8 @@ extension Color {
     static let washiBlue = Color(hex: "5AC8FA")
     /// 玫瑰灰 - 装饰条
     static let washiRose = Color(hex: "FF6B9D")
+    /// 薄荷绿 - 装饰条（用户记录）
+    static let washiGreen = Color(hex: "34C759")
     /// 纹理叠加色
     static let paperGrain = Color(hex: "E5E5EA")
     /// 暖白 - 用于日记卡片

@@ -10,20 +10,21 @@ struct ContentView: View {
         TabView {
             MainRecordView()
                 .tabItem {
-                    Label("记录", systemImage: "mic.fill")
+                    Label("首页", systemImage: "house.fill")
                 }
 
             InsightsView()
                 .tabItem {
-                    Label("洞察", systemImage: "book.closed")
+                    Label("洞察", systemImage: "chart.line.uptrend.xyaxis")
                 }
 
             ProfileView()
                 .tabItem {
-                    Label("我的", systemImage: "person.circle")
+                    Label("我的", systemImage: "person.fill")
                 }
         }
         .tint(Color.lifeAccent)
+        .tabBarMinimizeBehavior(.automatic)
     }
 }
 

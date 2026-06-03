@@ -81,8 +81,8 @@ final class CloudBaseHTTPClient {
         if let token = token {
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         } else {
-            // 使用 Publishable Key
-            request.setValue(CloudBaseConfig.publishableKey, forHTTPHeaderField: "Authorization")
+            // 使用 Publishable Key（需要 Bearer 前缀）
+            request.setValue("Bearer \(CloudBaseConfig.publishableKey)", forHTTPHeaderField: "Authorization")
         }
 
         // 设置请求体
@@ -144,7 +144,8 @@ final class CloudBaseHTTPClient {
         if let token = token {
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         } else {
-            request.setValue(CloudBaseConfig.publishableKey, forHTTPHeaderField: "Authorization")
+            // 使用 Publishable Key（需要 Bearer 前缀）
+            request.setValue("Bearer \(CloudBaseConfig.publishableKey)", forHTTPHeaderField: "Authorization")
         }
 
         if let body = body {

@@ -1,13 +1,14 @@
 import SwiftUI
 import Combine
 
-/// 登录页面 - 手机号短信验证码登录
+/// 登录页面 - 邮箱验证码登录
 struct LoginView: View {
     @Environment(\.dismiss) private var dismiss
-    @State private var authService = AuthService()
+    @Bindable var authService: AuthService
 
-    @State private var phoneNumber = ""
+    @State private var email = ""
     @State private var verificationCode = ""
+    @State private var password = ""
     @State private var codeSent = false
     @State private var countdown = 0
 
@@ -68,7 +69,7 @@ struct LoginView: View {
                 .font(.title2)
                 .fontWeight(.bold)
 
-            Text("使用手机号登录，数据安全同步")
+            Text("使用邮箱验证码登录，数据安全同步")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
         }
@@ -78,15 +79,16 @@ struct LoginView: View {
 
     private var formSection: some View {
         VStack(spacing: 20) {
-            // 手机号输入
+            // 邮箱输入
             HStack {
-                Image(systemName: "phone")
+                Image(systemName: "envelope")
                     .foregroundStyle(.secondary)
                     .frame(width: 24)
 
-                TextField("请输入手机号", text: $phoneNumber)
-                    .keyboardType(.phonePad)
-                    .textContentType(.telephoneNumber)
+                TextField("请输入邮箱", text: $email)
+                    .keyboardType(.emailAddress)
+                    .textContentType(.emailAddress)
+                    .autocapitalization(.none)
                     .disabled(codeSent)
             }
             .padding()
@@ -107,13 +109,26 @@ struct LoginView: View {
                 .padding()
                 .background(Color(.systemGray6))
                 .clipShape(RoundedRectangle(cornerRadius: 12))
+
+                // 密码输入（可选）
+                HStack {
+                    Image(systemName: "lock.fill")
+                        .foregroundStyle(.secondary)
+                        .frame(width: 24)
+
+                    SecureField("设置密码（可选）", text: $password)
+                        .textContentType(.newPassword)
+                }
+                .padding()
+                .background(Color(.systemGray6))
+                .clipShape(RoundedRectangle(cornerRadius: 12))
             }
 
             // 发送验证码 / 登录按钮
             if !codeSent {
                 Button {
                     Task {
-                        await authService.sendVerificationCode(phoneNumber: phoneNumber)
+                        await authService.sendEmailVerificationCode(email: email)
                         if authService.successMessage != nil {
                             codeSent = true
                             startCountdown()
@@ -129,17 +144,18 @@ struct LoginView: View {
                     }
                     .frame(maxWidth: .infinity)
                     .padding()
-                    .background(phoneNumber.count >= 11 ? Color.lifeAccent : Color.gray)
+                    .background(isEmailValid ? Color.lifeAccent : Color.gray)
                     .foregroundStyle(.white)
                     .clipShape(RoundedRectangle(cornerRadius: 12))
                 }
-                .disabled(phoneNumber.count < 11 || authService.isLoading)
+                .disabled(!isEmailValid || authService.isLoading)
             } else {
                 Button {
                     Task {
-                        await authService.verifyCodeAndSignIn(
+                        await authService.verifyEmailCodeAndSignIn(
                             code: verificationCode,
-                            phoneNumber: phoneNumber
+                            email: email,
+                            password: password.isEmpty ? nil : password
                         )
                         if authService.isAuthenticated {
                             dismiss()
@@ -166,7 +182,8 @@ struct LoginView: View {
                     Task {
                         codeSent = false
                         verificationCode = ""
-                        await authService.sendVerificationCode(phoneNumber: phoneNumber)
+                        password = ""
+                        await authService.sendEmailVerificationCode(email: email)
                         if authService.successMessage != nil {
                             codeSent = true
                             startCountdown()
@@ -180,6 +197,11 @@ struct LoginView: View {
                 .disabled(countdown > 0 || authService.isLoading)
             }
         }
+    }
+
+    /// 邮箱验证
+    private var isEmailValid: Bool {
+        email.contains("@") && email.contains(".")
     }
 
     // MARK: - 提示文本
@@ -247,5 +269,5 @@ struct LoginView: View {
 }
 
 #Preview {
-    LoginView()
+    LoginView(authService: AuthService())
 }

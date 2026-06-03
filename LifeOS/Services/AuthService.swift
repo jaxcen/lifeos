@@ -66,6 +66,7 @@ private enum AuthStorageKey {
     static let refreshToken = "cloudbase_refresh_token"
     static let userId = "cloudbase_user_id"
     static let userPhone = "cloudbase_user_phone"
+    static let userEmail = "cloudbase_user_email"
 }
 
 /// 认证服务 - 管理用户登录状态
@@ -236,6 +237,127 @@ final class AuthService {
         }
     }
 
+    // MARK: - 发送邮箱验证码
+
+    /// 发送邮箱验证码
+    /// - Parameter email: 邮箱地址
+    func sendEmailVerificationCode(email: String) async {
+        await MainActor.run {
+            isLoading = true
+            errorMessage = nil
+            successMessage = nil
+        }
+
+        let body: [String: Any] = [
+            "email": email,
+            "target": "ANY"
+        ]
+
+        do {
+            let response = try await httpClient.sendRaw(
+                to: CloudBaseConfig.AuthAPI.sendVerification,
+                body: body
+            )
+
+            guard let verificationId = response["verification_id"] as? String else {
+                throw CloudBaseError.invalidResponse
+            }
+
+            await MainActor.run {
+                self.authState = .codeSent(verificationId: verificationId)
+                self.isLoading = false
+                self.successMessage = "验证码已发送到邮箱"
+            }
+        } catch {
+            await MainActor.run {
+                self.isLoading = false
+                self.errorMessage = "发送验证码失败: \(error.localizedDescription)"
+            }
+        }
+    }
+
+    // MARK: - 验证邮箱验证码并注册/登录
+
+    /// 验证邮箱验证码并完成注册/登录
+    /// - Parameters:
+    ///   - code: 验证码
+    ///   - email: 邮箱地址
+    ///   - password: 密码（可选，用于设置账号密码）
+    func verifyEmailCodeAndSignIn(code: String, email: String, password: String? = nil) async {
+        guard case .codeSent(let verificationId) = authState else {
+            await MainActor.run {
+                self.errorMessage = "请先发送验证码"
+            }
+            return
+        }
+
+        await MainActor.run {
+            isLoading = true
+            errorMessage = nil
+        }
+
+        // Step 1: 验证验证码，获取 verification_token
+        let verifyBody: [String: Any] = [
+            "verification_id": verificationId,
+            "verification_code": code
+        ]
+
+        do {
+            let verifyResponse = try await httpClient.sendRaw(
+                to: CloudBaseConfig.AuthAPI.verifyCode,
+                body: verifyBody
+            )
+
+            guard let verificationToken = verifyResponse["verification_token"] as? String else {
+                throw CloudBaseError.invalidResponse
+            }
+
+            // Step 2: 使用 verification_token 注册/登录
+            var signUpBody: [String: Any] = [
+                "email": email,
+                "verification_token": verificationToken
+            ]
+
+            // 如果提供了密码，设置密码
+            if let password = password {
+                signUpBody["password"] = password
+            }
+
+            let signInResponse = try await httpClient.sendRaw(
+                to: CloudBaseConfig.AuthAPI.signUp,
+                body: signUpBody
+            )
+
+            guard let accessToken = signInResponse["access_token"] as? String,
+                  let refreshToken = signInResponse["refresh_token"] as? String else {
+                throw CloudBaseError.invalidResponse
+            }
+
+            // 获取用户信息
+            let userId = (signInResponse["user"] as? [String: Any])?["id"] as? String ?? "unknown"
+
+            // 保存认证信息
+            saveAuth(
+                accessToken: accessToken,
+                refreshToken: refreshToken,
+                userId: userId,
+                email: email
+            )
+
+            await MainActor.run {
+                self.accessToken = accessToken
+                self.authState = .authenticated(userId: userId)
+                self.isLoading = false
+                self.successMessage = "登录成功"
+            }
+        } catch {
+            await MainActor.run {
+                self.isLoading = false
+                self.errorMessage = "登录失败: \(error.localizedDescription)"
+            }
+        }
+    }
+
     // MARK: - 退出登录
 
     func signOut() async {
@@ -263,11 +385,16 @@ final class AuthService {
 
     // MARK: - 存储管理
 
-    private func saveAuth(accessToken: String, refreshToken: String, userId: String, phone: String) {
+    private func saveAuth(accessToken: String, refreshToken: String, userId: String, phone: String? = nil, email: String? = nil) {
         defaults.set(accessToken, forKey: AuthStorageKey.accessToken)
         defaults.set(refreshToken, forKey: AuthStorageKey.refreshToken)
         defaults.set(userId, forKey: AuthStorageKey.userId)
-        defaults.set(phone, forKey: AuthStorageKey.userPhone)
+        if let phone = phone {
+            defaults.set(phone, forKey: AuthStorageKey.userPhone)
+        }
+        if let email = email {
+            defaults.set(email, forKey: AuthStorageKey.userEmail)
+        }
     }
 
     private func clearStoredAuth() {
@@ -275,11 +402,17 @@ final class AuthService {
         defaults.removeObject(forKey: AuthStorageKey.refreshToken)
         defaults.removeObject(forKey: AuthStorageKey.userId)
         defaults.removeObject(forKey: AuthStorageKey.userPhone)
+        defaults.removeObject(forKey: AuthStorageKey.userEmail)
     }
 
     /// 获取存储的手机号
     var storedPhone: String? {
         defaults.string(forKey: AuthStorageKey.userPhone)
+    }
+
+    /// 获取存储的邮箱
+    var storedEmail: String? {
+        defaults.string(forKey: AuthStorageKey.userEmail)
     }
 
     // MARK: - 刷新 Token
