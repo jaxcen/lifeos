@@ -19,7 +19,7 @@ struct BookShelfRowView: View {
             .padding(.horizontal, Layout.spacingL)
             .padding(.bottom, -4) // 让书和木板贴合
 
-            // 木板
+            // 雾紫玻璃托板
             shelfPlank
         }
     }
@@ -28,34 +28,37 @@ struct BookShelfRowView: View {
 
     private var shelfPlank: some View {
         VStack(spacing: 0) {
-            // 木板主体
-            Rectangle()
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
                 .fill(
                     LinearGradient(
                         colors: [
-                            Color(hex: "A0926B"),
-                            Color(hex: "8B7355"),
-                            Color(hex: "7A6548")
+                            Color.white.opacity(0.72),
+                            Color.lifeSoftLavender.opacity(0.58),
+                            Color.lifeSoftSky.opacity(0.3)
                         ],
-                        startPoint: .top,
-                        endPoint: .bottom
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
                     )
                 )
-                .frame(height: 12)
+                .frame(height: 14)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .stroke(Color.white.opacity(0.78), lineWidth: 1)
+                )
 
-            // 木板底部阴影
-            Rectangle()
+            Capsule()
                 .fill(
                     LinearGradient(
                         colors: [
-                            Color.black.opacity(0.1),
+                            Color.lifeAccent.opacity(0.12),
                             Color.clear
                         ],
                         startPoint: .top,
                         endPoint: .bottom
                     )
                 )
-                .frame(height: 8)
+                .frame(height: 10)
+                .blur(radius: 4)
         }
     }
 

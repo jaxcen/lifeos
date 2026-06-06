@@ -1,83 +1,41 @@
 import SwiftUI
-import WebKit
+import UIKit
 
-/// Plays the transparent WebM mascot from the app bundle.
-struct MascotVideoView: UIViewRepresentable {
-    let resourceName: String
-    var fileExtension: String = "webm"
+/// Displays the mascot as transparent PNG frames extracted from the WebM asset.
+struct MascotVideoView: View {
+    init(resourceName: String = "lifeos-mascot") {}
 
-    func makeUIView(context: Context) -> WKWebView {
-        let configuration = WKWebViewConfiguration()
-        configuration.allowsInlineMediaPlayback = true
-        configuration.mediaTypesRequiringUserActionForPlayback = []
-
-        let webView = WKWebView(frame: .zero, configuration: configuration)
-        webView.isOpaque = false
-        webView.backgroundColor = .clear
-        webView.scrollView.backgroundColor = .clear
-        webView.scrollView.isScrollEnabled = false
-
-        guard let url = Bundle.main.url(forResource: resourceName, withExtension: fileExtension) else {
-            return webView
+    private static let frameRate: TimeInterval = 1.0 / 12.0
+    private static let frames: [UIImage] = (1...36).compactMap { index in
+        let name = "mascot_\(String(format: "%02d", index))"
+        if let url = Bundle.main.url(forResource: name, withExtension: "png", subdirectory: "MascotFrames") {
+            return UIImage(contentsOfFile: url.path)
         }
-
-        let temporaryDirectory = FileManager.default.temporaryDirectory
-            .appendingPathComponent("lifeos-mascot-player", isDirectory: true)
-        try? FileManager.default.createDirectory(at: temporaryDirectory, withIntermediateDirectories: true)
-
-        let temporaryVideoURL = temporaryDirectory.appendingPathComponent(url.lastPathComponent)
-        if !FileManager.default.fileExists(atPath: temporaryVideoURL.path) {
-            try? FileManager.default.copyItem(at: url, to: temporaryVideoURL)
+        if let url = Bundle.main.url(forResource: name, withExtension: "png") {
+            return UIImage(contentsOfFile: url.path)
         }
-
-        let html = """
-        <!doctype html>
-        <html>
-        <head>
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <style>
-            html, body {
-              margin: 0;
-              width: 100%;
-              height: 100%;
-              overflow: hidden;
-              background: transparent;
-            }
-            video {
-              width: 100%;
-              height: 100%;
-              object-fit: contain;
-              background: transparent;
-              pointer-events: auto;
-              -webkit-transform: translateZ(0);
-            }
-          </style>
-        </head>
-        <body>
-          <video id="mascot" src="\(temporaryVideoURL.lastPathComponent)" autoplay muted loop playsinline webkit-playsinline preload="auto"></video>
-          <script>
-            const video = document.getElementById('mascot');
-            function startMuted() {
-              video.muted = true;
-              video.play().catch(function() {});
-            }
-            video.addEventListener('canplay', startMuted);
-            window.addEventListener('load', startMuted);
-            document.body.addEventListener('click', function() {
-              video.muted = false;
-              video.volume = 1;
-              video.play().catch(function() {});
-            });
-          </script>
-        </body>
-        </html>
-        """
-
-        let htmlURL = temporaryDirectory.appendingPathComponent("\(resourceName)-player.html")
-        try? html.write(to: htmlURL, atomically: true, encoding: .utf8)
-        webView.loadFileURL(htmlURL, allowingReadAccessTo: temporaryDirectory)
-        return webView
+        return UIImage(named: name)
     }
 
-    func updateUIView(_ uiView: WKWebView, context: Context) {}
+    var body: some View {
+        TimelineView(.periodic(from: .now, by: Self.frameRate)) { timeline in
+            if let image = currentFrame(at: timeline.date) {
+                Image(uiImage: image)
+                    .resizable()
+                    .interpolation(.high)
+                    .antialiased(true)
+                    .scaledToFit()
+            } else {
+                Image(systemName: "sparkles")
+                    .font(.system(size: 30, weight: .semibold))
+                    .foregroundStyle(Color.lifeAccent)
+            }
+        }
+    }
+
+    private func currentFrame(at date: Date) -> UIImage? {
+        guard !Self.frames.isEmpty else { return nil }
+        let index = Int(date.timeIntervalSinceReferenceDate / Self.frameRate) % Self.frames.count
+        return Self.frames[index]
+    }
 }

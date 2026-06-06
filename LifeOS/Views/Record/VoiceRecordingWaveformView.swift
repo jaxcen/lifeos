@@ -27,7 +27,6 @@ struct VoiceRecordingWaveformView: View {
             statusLabel
         }
         .frame(maxWidth: .infinity)
-        .lifeCard()
     }
 
     // MARK: - 波形

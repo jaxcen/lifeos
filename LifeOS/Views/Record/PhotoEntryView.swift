@@ -46,7 +46,6 @@ struct PhotoEntryView: View {
             }
             .padding(Layout.spacingS)
         }
-        .lifeCard(padding: 0)
     }
 
     // MARK: - 说明输入
@@ -69,7 +68,6 @@ struct PhotoEntryView: View {
                     }
                 }
         }
-        .lifeCard()
     }
 
     // MARK: - 占位
@@ -96,6 +94,5 @@ struct PhotoEntryView: View {
             .background(Color.lifeAccent.opacity(0.05))
             .clipShape(RoundedRectangle(cornerRadius: Layout.radiusM))
         }
-        .lifeCard()
     }
 }

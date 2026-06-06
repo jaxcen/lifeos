@@ -11,22 +11,53 @@ struct BookshelfView: View {
     }
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 0) {
-                if viewModel.books.isEmpty {
-                    emptyState
-                } else {
-                    bookshelfContent
+        ZStack {
+            bookshelfBackground
+
+            ScrollView {
+                VStack(spacing: 0) {
+                    if viewModel.books.isEmpty {
+                        emptyState
+                    } else {
+                        bookshelfContent
+                    }
                 }
+                .padding(.horizontal, Layout.spacingM)
             }
         }
-        .background(Color(hex: "F5F0E8"))
         .sheet(item: $selectedBook) { book in
             BookOpenView(book: book)
         }
         .onAppear {
             viewModel.loadBooks()
         }
+    }
+
+    private var bookshelfBackground: some View {
+        ZStack {
+            LinearGradient(
+                colors: [
+                    Color.lifeMistBackground,
+                    Color.lifeLavenderMist.opacity(0.9),
+                    Color.white
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+
+            Circle()
+                .fill(Color.lifeSoftLavender.opacity(0.36))
+                .frame(width: 260, height: 260)
+                .blur(radius: 38)
+                .offset(x: 150, y: -180)
+
+            Circle()
+                .fill(Color.lifeSoftSky.opacity(0.32))
+                .frame(width: 240, height: 240)
+                .blur(radius: 42)
+                .offset(x: -150, y: 260)
+        }
+        .ignoresSafeArea()
     }
 
     // MARK: - 书架内容
@@ -36,7 +67,7 @@ struct BookshelfView: View {
             // 顶部装饰
             topDecoration
 
-            // 书架行（每行最多 3 本）
+            // 书架行（两本一排，适配 iPhone 宽度）
             ForEach(Array(chunkedBooks.enumerated()), id: \.offset) { _, rowBooks in
                 BookShelfRowView(books: rowBooks) { book in
                     selectedBook = book
@@ -52,28 +83,17 @@ struct BookshelfView: View {
     // MARK: - 顶部装饰
 
     private var topDecoration: some View {
-        VStack(spacing: Layout.spacingS) {
-            // 书架顶部木板
-            Rectangle()
-                .fill(
-                    LinearGradient(
-                        colors: [
-                            Color(hex: "A0926B"),
-                            Color(hex: "8B7355")
-                        ],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                )
-                .frame(height: 6)
+        VStack(spacing: Layout.spacingM) {
+            Capsule()
+                .fill(Color.lifeAccent.opacity(0.16))
+                .frame(width: 54, height: 5)
 
-            // 提示文字
             Text("轻点打开一本书")
                 .font(.lifeCaption)
-                .foregroundStyle(Color.lifeTextSecondary.opacity(0.5))
-                .padding(.top, Layout.spacingS)
+                .foregroundStyle(Color.lifeTextSecondary)
                 .padding(.bottom, Layout.spacingM)
         }
+        .padding(.top, Layout.spacingS)
     }
 
     // MARK: - 空状态
@@ -85,7 +105,7 @@ struct BookshelfView: View {
 
             Image(systemName: "books.vertical")
                 .font(.system(size: 48))
-                .foregroundStyle(Color.lifeTextSecondary.opacity(0.3))
+                .foregroundStyle(Color.lifeAccent.opacity(0.45))
 
             Text("书架还是空的")
                 .font(.lifeHeadline)
@@ -104,8 +124,8 @@ struct BookshelfView: View {
     // MARK: - 分组
 
     private var chunkedBooks: [[DiaryBook]] {
-        stride(from: 0, to: viewModel.books.count, by: 3).map { start in
-            Array(viewModel.books[start..<min(start + 3, viewModel.books.count)])
+        stride(from: 0, to: viewModel.books.count, by: 2).map { start in
+            Array(viewModel.books[start..<min(start + 2, viewModel.books.count)])
         }
     }
 }

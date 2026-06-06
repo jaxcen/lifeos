@@ -71,7 +71,16 @@ struct BookChapterPageView: View {
             }
         }
         .padding(Layout.spacingXL)
-        .background(Color.paperWarm)
+        .background(
+            LinearGradient(
+                colors: [
+                    Color.white.opacity(0.82),
+                    Color.lifeSoftLavender.opacity(0.28)
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        )
         .clipShape(RoundedRectangle(cornerRadius: Layout.radiusM))
         .overlay(
             RoundedRectangle(cornerRadius: Layout.radiusM)

@@ -10,49 +10,55 @@ private struct MethodVisual {
     let gradient: [Color]
 }
 
-private extension RecordingMethod {
-    var expansionID: String {
-        switch self {
-        case .text: return "record-method-text"
-        case .voice: return "record-method-voice"
-        case .photo: return "record-method-photo"
-        }
-    }
-}
-
 /// 新首页 - 记录页
 struct MainRecordView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.appDI) private var di
+    @Query(sort: \DailyEntry.createdAt, order: .reverse) private var allEntries: [DailyEntry]
+    let resetSignal: Int
+
     @State private var viewModel: MainRecordViewModel?
     @State private var showPostRecord = false
     @State private var aiService: AIGenerationService?
+    @State private var showForecastFlow = false
+    @State private var isForecasting = false
+    @State private var isForecastProgressComplete = false
+    @State private var forecastErrorMessage: String?
     @State private var isRecordPanelExpanded = false
-    @Namespace private var recordExpansionNamespace
+
+    init(resetSignal: Int = 0) {
+        self.resetSignal = resetSignal
+    }
 
     var body: some View {
         NavigationStack {
             ZStack {
                 homeBackground
 
-                ScrollView(showsIndicators: false) {
-                    VStack(spacing: isRecordPanelExpanded ? 16 : 22) {
+                if isRecordPanelExpanded {
+                    VStack(spacing: 16) {
                         homeHeader
-
-                        if isRecordPanelExpanded {
-                            expandedRecordPanel
-                                .transition(.identity)
-                        } else {
-                            recordingMethodStage
-                            collapsedQuickInput
-                        }
+                        expandedRecordPanel
                     }
                     .padding(.horizontal, 24)
                     .padding(.top, 12)
-                    .padding(.bottom, 36)
+                    .padding(.bottom, 24)
+                } else {
+                    ScrollView(showsIndicators: false) {
+                        VStack(spacing: 14) {
+                            homeHeader
+                            mascotHero
+                            recordingMethodStage
+                            collapsedQuickInput
+                        }
+                        .padding(.horizontal, 24)
+                        .padding(.top, 12)
+                        .padding(.bottom, 104)
+                    }
                 }
             }
             .navigationBarHidden(true)
+            .toolbar(isRecordPanelExpanded ? .hidden : .visible, for: .tabBar)
             .animation(.spring(response: 0.42, dampingFraction: 0.86), value: isRecordPanelExpanded)
             .animation(.spring(response: 0.34, dampingFraction: 0.82), value: viewModel?.selectedMethod ?? .text)
             .sheet(isPresented: Binding(
@@ -85,6 +91,9 @@ struct MainRecordView: View {
             .fullScreenCover(isPresented: $showPostRecord) {
                 PostRecordFlow(aiService: aiService)
             }
+            .fullScreenCover(isPresented: $showForecastFlow) {
+                forecastFlow
+            }
             .overlay {
                 if let saved = viewModel?.savedMessage {
                     savedToast(saved)
@@ -97,15 +106,17 @@ struct MainRecordView: View {
                         modelContext: modelContext
                     )
                     vm.onSaveComplete = {
-                        if aiService == nil {
-                            aiService = AIGenerationService(
-                                aiService: di.aiService,
-                                modelContext: modelContext
-                            )
-                        }
+                        ensureAIService()
                         showPostRecord = true
                     }
                     viewModel = vm
+                }
+                ensureAIService()
+                aiService?.loadTodayData()
+            }
+            .onChange(of: resetSignal) { _, _ in
+                withAnimation(.spring(response: 0.36, dampingFraction: 0.88)) {
+                    isRecordPanelExpanded = false
                 }
             }
         }
@@ -160,54 +171,92 @@ struct MainRecordView: View {
 
                     Spacer(minLength: 12)
 
-                    todayReviewMascot(compact: compact)
+                    tomorrowCrystalButton(compact: compact)
                         .padding(.top, compact ? 2 : 8)
                 }
 
-                if compact {
-                    Text("继续记录此刻的想法")
-                        .font(.system(size: 17, weight: .semibold, design: .rounded))
-                        .foregroundStyle(Color.lifeTextSecondary)
-                } else {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text(greetingText)
-                        Text("今天想用什么方式")
-                        Text("记录你的想法呢？")
-                    }
-                    .font(.system(size: 24, weight: .medium, design: .rounded))
-                    .foregroundStyle(Color.lifeText)
-                    .lineSpacing(3)
-                    .padding(.top, 12)
-                }
+                Text(compact ? "继续记录此刻" : "记录今天，预测明天")
+                    .font(.system(size: compact ? 16 : 17, weight: .semibold, design: .rounded))
+                    .foregroundStyle(Color.lifeTextSecondary)
+                    .padding(.top, compact ? 0 : 4)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .frame(height: compact ? 104 : 300)
+        .frame(height: compact ? 96 : 138)
     }
 
-    private func todayReviewMascot(compact: Bool) -> some View {
-        ZStack(alignment: .trailing) {
-            if compact {
-                MascotVideoView(resourceName: "lifeos-mascot")
-                    .frame(width: 58, height: 52)
-                    .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-            } else {
-                MascotVideoView(resourceName: "lifeos-mascot")
-                    .frame(width: 112, height: 100)
-                    .clipShape(RoundedRectangle(cornerRadius: 26, style: .continuous))
-                    .offset(x: -42, y: 12)
+    private func tomorrowCrystalButton(compact: Bool) -> some View {
+        Button {
+            startTomorrowForecast()
+        } label: {
+            HStack(spacing: compact ? 0 : 9) {
+                CrystalBallIcon(size: compact ? 38 : 36)
+                    .padding(.leading, compact ? 0 : 1)
 
-                Text("今日回顾")
-                    .font(.system(size: 14, weight: .semibold, design: .rounded))
-                    .foregroundStyle(Color.lifeAccent)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 9)
-                    .background(Color.white.opacity(0.32), in: Capsule())
+                if !compact {
+                    Text("预测明天")
+                        .font(.system(size: 15, weight: .semibold, design: .rounded))
+                        .foregroundStyle(Color.lifeAccent)
+                }
             }
+            .padding(.leading, compact ? 0 : 10)
+            .padding(.trailing, compact ? 0 : 16)
+            .frame(width: compact ? 58 : 150, height: 58)
+            .glassEffect(.regular, in: Capsule())
+            .shadow(color: Color.lifeAccent.opacity(0.12), radius: 16, y: 8)
         }
-        .frame(width: compact ? 64 : 166, height: compact ? 58 : 116)
-        .glassEffect(.regular, in: Capsule())
-        .shadow(color: Color.lifeAccent.opacity(0.12), radius: 14, y: 8)
+        .buttonStyle(.plain)
+    }
+
+    private var mascotHero: some View {
+        HStack(spacing: 10) {
+            VStack(alignment: .leading, spacing: 12) {
+                Label("\(todayEntryCount) 条记录", systemImage: "checkmark.circle.fill")
+                    .font(.system(size: 17, weight: .bold, design: .rounded))
+                    .foregroundStyle(Color.lifeText)
+
+                Text(todayEntryCount == 0 ? "留下第一条线索" : "记录越完整，明天的预测越清晰")
+                    .font(.system(size: 13, weight: .medium, design: .rounded))
+                    .foregroundStyle(Color.lifeTextSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                HStack(spacing: 5) {
+                    ForEach(0..<5, id: \.self) { index in
+                        Capsule()
+                            .fill(index < predictionSignalLevel ? Color.lifeAccent : Color.lifeAccent.opacity(0.12))
+                            .frame(width: 17, height: 6)
+                    }
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.leading, 4)
+
+            ZStack(alignment: .bottom) {
+                Circle()
+                    .trim(from: 0, to: 0.5)
+                    .fill(Color.lifeSoftPeach.opacity(0.78))
+                    .frame(width: 238, height: 238)
+                    .rotationEffect(.degrees(180))
+                    .offset(y: 68)
+                    .blur(radius: 0.4)
+
+                MascotVideoView()
+                    .frame(width: 218, height: 218)
+                    .offset(y: 20)
+            }
+            .frame(width: 230, height: 178)
+            .clipped()
+        }
+        .frame(maxWidth: .infinity)
+        .frame(height: 178)
+    }
+
+    private var todayEntryCount: Int {
+        allEntries.filter { Calendar.current.isDateInToday($0.date) }.count
+    }
+
+    private var predictionSignalLevel: Int {
+        min(5, todayEntryCount)
     }
 
     private var greetingText: String {
@@ -225,41 +274,53 @@ struct MainRecordView: View {
 
     // MARK: - 记录方式选择
 
-    private var recordingMethodBar: some View {
-        HStack(spacing: Layout.spacingM) {
+    private var recordingMethodStage: some View {
+        HStack(spacing: 10) {
             ForEach(RecordingMethod.allCases, id: \.self) { method in
-                methodButton(method)
+                modeDomeButton(method)
             }
         }
+        .frame(height: 94)
     }
 
-    private var recordingMethodStage: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: 120, style: .continuous)
-                .fill(Color.white.opacity(0.08))
-                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 120, style: .continuous))
-                .frame(height: 118)
-                .offset(y: 64)
+    private func modeDomeButton(_ method: RecordingMethod) -> some View {
+        let isSelected = (viewModel?.selectedMethod ?? .text) == method
+        let visual = methodVisual(method)
 
-            HStack(alignment: .bottom, spacing: -14) {
-                methodFeatureCard(.text)
-                    .frame(width: 118, height: 164)
-                    .rotationEffect(.degrees(-5))
-                    .offset(y: 12)
+        return Button {
+            selectMethod(method)
+        } label: {
+            VStack(spacing: 7) {
+                Image(systemName: method == .text ? "textformat" : visual.icon)
+                    .font(.system(size: 23, weight: .bold))
+                    .foregroundStyle(isSelected ? .white : visual.color)
+                    .frame(width: 48, height: 48)
+                    .background(
+                        isSelected ? visual.color : visual.color.opacity(0.13),
+                        in: Circle()
+                    )
 
-                methodFeatureCard(.voice)
-                    .frame(width: 128, height: 180)
-                    .rotationEffect(.degrees(2))
-                    .zIndex(1)
-
-                methodFeatureCard(.photo)
-                    .frame(width: 118, height: 164)
-                    .rotationEffect(.degrees(5))
-                    .offset(y: 12)
+                Text(method.rawValue)
+                    .font(.system(size: 15, weight: .bold, design: .rounded))
+                    .foregroundStyle(Color.lifeText)
             }
             .frame(maxWidth: .infinity)
+            .frame(height: 88)
+            .background(
+                RoundedRectangle(cornerRadius: 30, style: .continuous)
+                    .fill(
+                        LinearGradient(
+                            colors: visual.gradient,
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .opacity(isSelected ? 0.92 : 0.68)
+            )
+            .shadow(color: visual.color.opacity(isSelected ? 0.14 : 0.05), radius: 12, y: 7)
+            .scaleEffect(isSelected ? 1.015 : 0.98)
         }
-        .frame(height: 214)
+        .buttonStyle(.plain)
     }
 
     private var collapsedQuickInput: some View {
@@ -294,15 +355,17 @@ struct MainRecordView: View {
                 .padding(.horizontal, 18)
                 .padding(.bottom, 16)
             }
-            .frame(height: 172)
+            .frame(height: 158)
             .frame(maxWidth: .infinity)
-            .background(Color.white.opacity(0.12), in: RoundedRectangle(cornerRadius: 32, style: .continuous))
-            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 32, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: 32, style: .continuous)
-                    .stroke(.white.opacity(0.78), lineWidth: 1)
+            .background(
+                LinearGradient(
+                    colors: [Color.white.opacity(0.82), Color.lifeSoftLavender.opacity(0.34)],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                ),
+                in: RoundedRectangle(cornerRadius: 32, style: .continuous)
             )
-            .shadow(color: Color.lifeAccent.opacity(0.08), radius: 24, y: 14)
+            .shadow(color: Color.lifeAccent.opacity(0.07), radius: 18, y: 10)
         }
         .buttonStyle(.plain)
     }
@@ -311,7 +374,7 @@ struct MainRecordView: View {
         let method = viewModel?.selectedMethod ?? .text
         let visual = methodVisual(method)
 
-        return VStack(spacing: 16) {
+        return VStack(spacing: 18) {
             HStack(spacing: 10) {
                 methodIconBlock(method, visual: visual)
                     .frame(width: 72, height: 64)
@@ -340,31 +403,26 @@ struct MainRecordView: View {
                         }
                         .buttonStyle(.plain)
                     }
+
+                    Button {
+                        withAnimation(.spring(response: 0.36, dampingFraction: 0.88)) {
+                            isRecordPanelExpanded = false
+                        }
+                    } label: {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 13, weight: .bold))
+                            .foregroundStyle(Color.lifeTextSecondary)
+                            .frame(width: 34, height: 34)
+                            .background(Color.white.opacity(0.44), in: Circle())
+                    }
+                    .buttonStyle(.plain)
                 }
             }
 
             inputArea
+                .frame(maxHeight: .infinity, alignment: .top)
         }
-        .padding(18)
-        .background(
-                RoundedRectangle(cornerRadius: 34, style: .continuous)
-                .fill(Color.white.opacity(0.12))
-                .matchedGeometryEffect(id: method.expansionID, in: recordExpansionNamespace)
-                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 34, style: .continuous))
-                .overlay(
-                    LinearGradient(
-                        colors: visual.gradient,
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                    .opacity(0.76)
-                )
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 34, style: .continuous)
-                .stroke(.white.opacity(0.82), lineWidth: 1)
-        )
-        .shadow(color: visual.color.opacity(0.22), radius: 24, y: 14)
+        .frame(maxHeight: .infinity, alignment: .top)
     }
 
     private func methodIconBlock(_ method: RecordingMethod, visual: MethodVisual) -> some View {
@@ -382,140 +440,6 @@ struct MainRecordView: View {
                     .foregroundStyle(visual.color)
             }
         }
-    }
-
-    private func methodButton(_ method: RecordingMethod) -> some View {
-        let isSelected = viewModel?.selectedMethod == method
-
-        return Button {
-            withAnimation(.easeInOut(duration: 0.2)) {
-                viewModel?.selectedMethod = method
-            }
-        } label: {
-            VStack(spacing: Layout.spacingS) {
-                Image(systemName: method.icon)
-                    .font(.system(size: 24))
-                    .foregroundStyle(isSelected ? .white : Color.lifeAccent)
-
-                Text(method.rawValue)
-                    .font(.lifeCaption)
-                    .foregroundStyle(isSelected ? .white : Color.lifeText)
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, Layout.spacingL)
-            .background(isSelected ? Color.lifeAccent : Color.lifeCardBackground)
-            .clipShape(RoundedRectangle(cornerRadius: Layout.radiusM))
-            .shadow(
-                color: isSelected ? Color.lifeAccent.opacity(0.3) : .black.opacity(0.04),
-                radius: isSelected ? 8 : 4,
-                y: isSelected ? 4 : 2
-            )
-        }
-    }
-
-    private func methodFeatureCard(_ method: RecordingMethod) -> some View {
-        let isSelected = (viewModel?.selectedMethod ?? .text) == method
-        let visual = methodVisual(method)
-
-        return Button {
-            selectMethod(method)
-        } label: {
-            VStack(spacing: 10) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 22)
-                        .fill(visual.color.opacity(0.13))
-                        .frame(height: 50)
-
-                    if method == .text {
-                        Text("AI")
-                            .font(.system(size: 28, weight: .medium, design: .rounded))
-                    } else {
-                        Image(systemName: visual.icon)
-                            .font(.system(size: 28, weight: .semibold))
-                    }
-                }
-                .foregroundStyle(visual.color)
-
-                VStack(spacing: 4) {
-                    Text(visual.title)
-                        .font(.system(size: 17, weight: .bold, design: .rounded))
-                        .foregroundStyle(Color.lifeText)
-                        .minimumScaleFactor(0.82)
-
-                    Text(visual.subtitle)
-                        .font(.system(size: 11, weight: .medium, design: .rounded))
-                        .foregroundStyle(Color.lifeTextSecondary)
-                        .lineLimit(2)
-                        .multilineTextAlignment(.center)
-                }
-
-                Spacer(minLength: 0)
-            }
-            .padding(.horizontal, 12)
-            .padding(.top, 18)
-            .padding(.bottom, 12)
-            .background(
-                RoundedRectangle(cornerRadius: 28)
-                    .fill(Color.white.opacity(0.16))
-                    .matchedGeometryEffect(id: method.expansionID, in: recordExpansionNamespace)
-                    .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
-                    .overlay(
-                        LinearGradient(
-                            colors: visual.gradient,
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 28)
-                    .stroke(isSelected ? visual.color.opacity(0.55) : .white.opacity(0.75), lineWidth: isSelected ? 1.4 : 1)
-            )
-            .shadow(color: visual.color.opacity(isSelected ? 0.32 : 0.16), radius: isSelected ? 20 : 12, y: isSelected ? 10 : 7)
-            .scaleEffect(isSelected ? 1.07 : 0.98)
-            .offset(y: isSelected ? -8 : 0)
-        }
-        .buttonStyle(.plain)
-    }
-
-    private func compactMethodChip(_ method: RecordingMethod) -> some View {
-        let isSelected = (viewModel?.selectedMethod ?? .text) == method
-        let visual = methodVisual(method)
-
-        return Button {
-            selectMethod(method)
-        } label: {
-            HStack(spacing: 6) {
-                Image(systemName: visual.icon)
-                    .font(.system(size: 14, weight: .semibold))
-                Text(method.rawValue)
-                    .font(.system(size: 13, weight: .bold, design: .rounded))
-            }
-            .foregroundStyle(isSelected ? .white : visual.color)
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 13)
-            .background(
-                Group {
-                    if isSelected {
-                        Capsule().fill(visual.color)
-                    } else {
-                        Capsule().fill(.white.opacity(0.28))
-                    }
-                }
-            )
-        }
-        .buttonStyle(.plain)
-    }
-
-    private var startHint: some View {
-        Text("点选一种记录方式开始")
-            .font(.system(size: 15, weight: .semibold, design: .rounded))
-            .foregroundStyle(Color.lifeTextSecondary)
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 18)
-            .background(.ultraThinMaterial, in: Capsule())
-            .overlay(Capsule().stroke(.white.opacity(0.72), lineWidth: 1))
-            .shadow(color: Color.lifeAccent.opacity(0.08), radius: 16, y: 8)
     }
 
     private func selectMethod(_ method: RecordingMethod) {
@@ -583,7 +507,7 @@ struct MainRecordView: View {
             .font(.lifeBody)
             .foregroundStyle(Color.lifeText)
             .scrollContentBackground(.hidden)
-            .frame(minHeight: 170)
+            .frame(minHeight: 170, maxHeight: .infinity)
             .padding(.horizontal, 18)
             .padding(.top, viewModel?.selectedTemplate == nil ? 18 : 8)
             .overlay(alignment: .topLeading) {
@@ -633,13 +557,7 @@ struct MainRecordView: View {
             .padding(.horizontal, 18)
             .padding(.bottom, 18)
         }
-        .background(Color.white.opacity(0.12), in: RoundedRectangle(cornerRadius: 32, style: .continuous))
-        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 32, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 32, style: .continuous)
-                .stroke(.white.opacity(0.86), lineWidth: 1)
-        )
-        .shadow(color: Color.lifeAccent.opacity(0.08), radius: 24, y: 14)
+        .frame(maxHeight: .infinity, alignment: .top)
     }
 
     private var placeholderText: String {
@@ -701,13 +619,6 @@ struct MainRecordView: View {
             }
         }
         .padding(18)
-        .background(Color.white.opacity(0.12), in: RoundedRectangle(cornerRadius: 32, style: .continuous))
-        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 32, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 32, style: .continuous)
-                .stroke(.white.opacity(0.75), lineWidth: 1)
-        )
-        .shadow(color: Color.lifeAccent.opacity(0.08), radius: 24, y: 14)
         .animation(.easeInOut(duration: 0.2), value: viewModel?.canSave ?? false)
     }
 
@@ -755,14 +666,128 @@ struct MainRecordView: View {
             }
         }
         .padding(18)
-        .background(Color.white.opacity(0.12), in: RoundedRectangle(cornerRadius: 32, style: .continuous))
-        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 32, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 32, style: .continuous)
-                .stroke(.white.opacity(0.75), lineWidth: 1)
-        )
-        .shadow(color: Color.lifeAccent.opacity(0.08), radius: 24, y: 14)
         .animation(.easeInOut(duration: 0.2), value: viewModel?.canSave ?? false)
+    }
+
+    // MARK: - 明日预测
+
+    @ViewBuilder
+    private var forecastFlow: some View {
+        ZStack(alignment: .topTrailing) {
+            if isForecasting {
+                PredictionProgressView(
+                    title: "正在预测明天",
+                    subtitle: "把今天的记录换算成明天的节奏",
+                    isComplete: isForecastProgressComplete
+                )
+            } else if let forecast = aiService?.currentForecast {
+                ForecastDetailView(forecast: forecast)
+            } else if let message = forecastErrorMessage {
+                forecastErrorView(message)
+            } else {
+                PredictionProgressView(
+                    title: "正在预测明天",
+                    isComplete: isForecastProgressComplete
+                )
+            }
+
+            if isForecasting || forecastErrorMessage != nil {
+                Button {
+                    showForecastFlow = false
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundStyle(Color.lifeText)
+                        .frame(width: 44, height: 44)
+                        .background(.ultraThinMaterial, in: Circle())
+                }
+                .buttonStyle(.plain)
+                .padding(.top, 12)
+                .padding(.trailing, 18)
+            }
+        }
+        .ignoresSafeArea(edges: .bottom)
+    }
+
+    private func forecastErrorView(_ message: String) -> some View {
+        VStack(spacing: 18) {
+            Spacer()
+
+            CrystalBallIcon(size: 54)
+
+            Text("预测暂时中断")
+                .font(.system(size: 22, weight: .bold, design: .rounded))
+                .foregroundStyle(Color.lifeText)
+
+            Text(message)
+                .font(.lifeCaption)
+                .foregroundStyle(Color.lifeTextSecondary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 26)
+
+            Button("重新预测") {
+                startTomorrowForecast(force: true)
+            }
+            .buttonStyle(.lifePill)
+
+            Spacer()
+        }
+        .padding(24)
+    }
+
+    private func ensureAIService() {
+        if aiService == nil {
+            aiService = AIGenerationService(
+                aiService: di.aiService,
+                modelContext: modelContext
+            )
+        }
+    }
+
+    private func startTomorrowForecast(force: Bool = false) {
+        ensureAIService()
+        forecastErrorMessage = nil
+        isForecastProgressComplete = false
+        showForecastFlow = true
+
+        if aiService?.currentForecast != nil, !force {
+            isForecasting = false
+            return
+        }
+
+        isForecasting = true
+        Task {
+            let startedAt = ContinuousClock.now
+            await aiService?.generateForecast()
+
+            let elapsed = startedAt.duration(to: .now)
+            let minimumDuration = Duration.seconds(3)
+            if elapsed < minimumDuration {
+                try? await Task.sleep(for: minimumDuration - elapsed)
+            }
+
+            let hasForecast = aiService?.currentForecast != nil
+            await MainActor.run {
+                if hasForecast {
+                    isForecastProgressComplete = true
+                } else {
+                    isForecasting = false
+                    switch aiService?.loadingState {
+                    case .error(let message):
+                        forecastErrorMessage = message
+                    default:
+                        forecastErrorMessage = "预测没有完成，请稍后再试"
+                    }
+                }
+            }
+
+            if hasForecast {
+                try? await Task.sleep(for: .milliseconds(420))
+                await MainActor.run {
+                    isForecasting = false
+                }
+            }
+        }
     }
 
     // MARK: - 保存提示

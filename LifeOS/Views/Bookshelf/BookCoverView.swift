@@ -28,7 +28,7 @@ struct BookCoverView: View {
 
     private var spine: some View {
         RoundedRectangle(cornerRadius: 2)
-            .fill(book.coverColor.opacity(0.8))
+            .fill(Color.lifeAccent.opacity(0.76))
             .frame(width: 10, height: 168)
             .overlay(
                 Text(book.title)
@@ -47,8 +47,9 @@ struct BookCoverView: View {
             .fill(
                 LinearGradient(
                     colors: [
-                        book.coverColor,
-                        book.coverColor.opacity(0.85)
+                        book.coverColor.opacity(0.78),
+                        Color.lifeAccent.opacity(0.72),
+                        Color.lifePhotoAccent.opacity(0.64)
                     ],
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
@@ -100,7 +101,7 @@ struct BookCoverView: View {
         VStack(spacing: 0) {
             ForEach(0..<3, id: \.self) { i in
                 Rectangle()
-                    .fill(Color(hex: "F5F0E8"))
+                    .fill(Color.white.opacity(0.86))
                     .frame(width: 3, height: CGFloat(168 - i * 2))
                     .offset(x: CGFloat(i) * 0.5)
             }

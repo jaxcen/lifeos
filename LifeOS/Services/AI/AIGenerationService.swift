@@ -102,7 +102,7 @@ final class AIGenerationService {
 
     func generateDiary(for date: Date = Date()) async {
         await MainActor.run {
-            loadingState = .loading("正在写今天的观察日记...")
+            loadingState = .loading("正在预测它的今天...")
         }
 
         do {
@@ -139,7 +139,7 @@ final class AIGenerationService {
 
     func generateForecast(for date: Date = Date()) async {
         await MainActor.run {
-            loadingState = .loading("正在推演明天...")
+            loadingState = .loading("正在预测明天...")
         }
 
         do {

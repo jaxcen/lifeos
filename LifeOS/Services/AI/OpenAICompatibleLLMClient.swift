@@ -35,49 +35,67 @@ final class OpenAICompatibleLLMClient: LLMClientProtocol {
         print("[LLM] ➡️ 请求: \(url.absoluteString)")
         print("[LLM] 模型: \(modelName), 消息数: \(messages.count)")
 
-        let (data, response) = try await session.data(for: request)
+        let retryableStatusCodes = Set([500, 502, 503, 504])
+        let maximumAttempts = 3
 
-        guard let httpResponse = response as? HTTPURLResponse else {
-            print("[LLM] ❌ 无效响应类型")
-            throw AIServiceError.networkError(URLError(.badServerResponse))
-        }
+        for attempt in 1...maximumAttempts {
+            let (data, response) = try await session.data(for: request)
 
-        print("[LLM] 状态码: \(httpResponse.statusCode)")
+            guard let httpResponse = response as? HTTPURLResponse else {
+                print("[LLM] ❌ 无效响应类型")
+                throw AIServiceError.networkError(URLError(.badServerResponse))
+            }
 
-        guard httpResponse.statusCode == 200 else {
+            print("[LLM] 状态码: \(httpResponse.statusCode)，尝试 \(attempt)/\(maximumAttempts)")
+
+            if httpResponse.statusCode == 200 {
+                let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
+                let choices = json?["choices"] as? [[String: Any]]
+                let message = choices?.first?["message"] as? [String: Any]
+                let rawContent = message?["content"] as? String ?? ""
+                let reasoningContent = message?["reasoning_content"] as? String ?? ""
+                let content = rawContent.isEmpty ? reasoningContent : rawContent
+
+                print("[LLM] ✅ 响应内容: \(content.prefix(200))")
+
+                let usage = json?["usage"] as? [String: Any]
+                let tokenUsage = usage.map {
+                    TokenUsage(
+                        promptTokens: $0["prompt_tokens"] as? Int ?? 0,
+                        completionTokens: $0["completion_tokens"] as? Int ?? 0,
+                        totalTokens: $0["total_tokens"] as? Int ?? 0
+                    )
+                }
+
+                return LLMResponse(
+                    content: content,
+                    usage: tokenUsage,
+                    model: json?["model"] as? String
+                )
+            }
+
             let errorBody = String(data: data, encoding: .utf8) ?? "未知错误"
             print("[LLM] ❌ 错误响应: \(errorBody.prefix(500))")
+
             if httpResponse.statusCode == 429 {
                 throw AIServiceError.rateLimited
             }
+
+            if retryableStatusCodes.contains(httpResponse.statusCode), attempt < maximumAttempts {
+                let delay = UInt64(attempt) * 650_000_000
+                print("[LLM] 服务暂时不可用，\(Double(delay) / 1_000_000_000) 秒后自动重试")
+                try await Task.sleep(nanoseconds: delay)
+                continue
+            }
+
+            let description = retryableStatusCodes.contains(httpResponse.statusCode)
+                ? "MiMo 服务暂时不可用，已自动重试，请稍后再试"
+                : "HTTP \(httpResponse.statusCode): \(errorBody)"
             throw AIServiceError.networkError(URLError(.badServerResponse, userInfo: [
-                NSLocalizedDescriptionKey: "HTTP \(httpResponse.statusCode): \(errorBody)"
+                NSLocalizedDescriptionKey: description
             ]))
         }
 
-        let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
-        let choices = json?["choices"] as? [[String: Any]]
-        let message = choices?.first?["message"] as? [String: Any]
-        // mimo-v2.5 是推理模型，可能将内容放在 reasoning_content 中
-        let rawContent = message?["content"] as? String ?? ""
-        let reasoningContent = message?["reasoning_content"] as? String ?? ""
-        let content = rawContent.isEmpty ? reasoningContent : rawContent
-
-        print("[LLM] ✅ 响应内容: \(content.prefix(200))")
-
-        let usage = json?["usage"] as? [String: Any]
-        let tokenUsage = usage.map {
-            TokenUsage(
-                promptTokens: $0["prompt_tokens"] as? Int ?? 0,
-                completionTokens: $0["completion_tokens"] as? Int ?? 0,
-                totalTokens: $0["total_tokens"] as? Int ?? 0
-            )
-        }
-
-        return LLMResponse(
-            content: content,
-            usage: tokenUsage,
-            model: json?["model"] as? String
-        )
+        throw AIServiceError.networkError(URLError(.badServerResponse))
     }
 }

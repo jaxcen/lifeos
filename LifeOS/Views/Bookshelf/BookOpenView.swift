@@ -28,7 +28,7 @@ struct BookOpenView: View {
                 }
                 .padding(.bottom, Layout.spacingXXL)
             }
-            .background(Color.paperWarm)
+            .background(bookBackground)
             .navigationTitle(book.title)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -42,6 +42,19 @@ struct BookOpenView: View {
         }
     }
 
+    private var bookBackground: some View {
+        LinearGradient(
+            colors: [
+                Color.lifeMistBackground,
+                Color.lifeLavenderMist.opacity(0.72),
+                Color.white
+            ],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+        .ignoresSafeArea()
+    }
+
     // MARK: - 封面区域
 
     private var bookHeader: some View {
@@ -49,7 +62,7 @@ struct BookOpenView: View {
             // 装饰图标
             Image(systemName: book.coverIcon)
                 .font(.system(size: 32))
-                .foregroundStyle(book.coverColor.opacity(0.4))
+                .foregroundStyle(Color.lifeAccent.opacity(0.68))
 
             // 书名
             Text(book.title)
@@ -89,9 +102,9 @@ struct BookOpenView: View {
                         // 章节编号
                         Text("\(index + 1)")
                             .font(.system(size: 14, weight: .medium))
-                            .foregroundStyle(book.coverColor)
+                            .foregroundStyle(Color.lifeAccent)
                             .frame(width: 24, height: 24)
-                            .background(book.coverColor.opacity(0.1))
+                            .background(Color.lifeAccent.opacity(0.1))
                             .clipShape(Circle())
 
                         VStack(alignment: .leading, spacing: 2) {

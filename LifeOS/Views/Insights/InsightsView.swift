@@ -68,6 +68,10 @@ struct InsightsView: View {
                             BookshelfView(modelContext: modelContext)
                         }
                     }
+
+                    if case .loading(let message) = vm.loadingState {
+                        insightsLoadingOverlay(message)
+                    }
                 }
             }
             .navigationBarHidden(true)
@@ -156,6 +160,22 @@ struct InsightsView: View {
         }
         .padding(.top, Layout.spacingL)
         .padding(.bottom, Layout.spacingM)
+    }
+
+    private func insightsLoadingOverlay(_ message: String) -> some View {
+        ZStack {
+            Color.white.opacity(0.24)
+                .ignoresSafeArea()
+
+            PredictionProgressView(
+                title: message.replacingOccurrences(of: "...", with: ""),
+                subtitle: message.contains("明天")
+                    ? "把今天的记录换算成明天的节奏"
+                    : "把今天的线索整理成可阅读的结果",
+                isComplete: false
+            )
+        }
+        .transition(.opacity)
     }
 }
 
@@ -305,8 +325,8 @@ struct InsightsDayPage: View {
                 ForecastCard(forecast: forecast)
             } else if viewModel.currentAlmanac != nil {
                 generateButton(
-                    icon: "sunrise",
-                    text: "推演明天",
+                    icon: "TabCrystalBall",
+                    text: "预测明天",
                     color: .lifeJi
                 ) {
                     Task { await viewModel.generateForecast() }
@@ -385,8 +405,16 @@ struct InsightsDayPage: View {
     ) -> some View {
         Button(action: action) {
             HStack(spacing: Layout.spacingS) {
-                Image(systemName: icon)
-                    .font(.system(size: 14))
+                if icon == "TabCrystalBall" {
+                    Image(icon)
+                        .renderingMode(.template)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 16, height: 16)
+                } else {
+                    Image(systemName: icon)
+                        .font(.system(size: 14))
+                }
                 Text(text)
                     .font(.lifeBodyEmphasis)
             }
