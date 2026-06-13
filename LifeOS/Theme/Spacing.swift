@@ -18,10 +18,10 @@ enum Layout {
     static let radiusPill: CGFloat = 100
 
     // MARK: - 卡片
-    static let cardPadding: CGFloat = 16
-    static let cardCornerRadius: CGFloat = 16
-    static let cardShadowRadius: CGFloat = 12
-    static let cardShadowY: CGFloat = 3
+    static let cardPadding: CGFloat = 18
+    static let cardCornerRadius: CGFloat = 24
+    static let cardShadowRadius: CGFloat = 16
+    static let cardShadowY: CGFloat = 6
 
     // MARK: - 纸堆翻页
     static let pageStackOffset: CGFloat = 6

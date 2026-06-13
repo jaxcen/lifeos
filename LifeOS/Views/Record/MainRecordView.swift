@@ -123,66 +123,34 @@ struct MainRecordView: View {
     }
 
     private var homeBackground: some View {
-        ZStack {
-            LinearGradient(
-                colors: [
-                    Color.lifeMistBackground,
-                    Color.lifeLavenderMist.opacity(0.9),
-                    Color.white
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-
-            Circle()
-                .fill(Color.lifeSoftLavender.opacity(0.38))
-                .frame(width: 280, height: 280)
-                .blur(radius: 34)
-                .offset(x: 120, y: -180)
-
-            Circle()
-                .fill(Color.lifeSoftSky.opacity(0.42))
-                .frame(width: 260, height: 260)
-                .blur(radius: 38)
-                .offset(x: -150, y: 240)
-        }
-        .ignoresSafeArea()
+        WarmBreathingBackground()
     }
 
     private var homeHeader: some View {
         let compact = isRecordPanelExpanded
 
-        return ZStack(alignment: .topTrailing) {
-            VStack(alignment: .leading, spacing: compact ? 10 : 24) {
-                HStack(alignment: .top) {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text(viewModel?.todayDateString ?? "今天")
-                            .font(.system(size: compact ? 32 : 48, weight: .heavy, design: .rounded))
-                            .foregroundStyle(Color.lifeText)
+        return HStack(alignment: .top) {
+            VStack(alignment: .leading, spacing: 6) {
+                Text(viewModel?.todayDateString ?? "今天")
+                    .font(.system(size: compact ? 30 : 40, weight: .heavy, design: .rounded))
+                    .foregroundStyle(Color.lifeText)
 
-                        HStack(spacing: 12) {
-                            Text(viewModel?.todayWeekday ?? "")
-                            Image(systemName: "sun.max")
-                            Text("晴 26°C")
-                        }
-                        .font(.system(size: 16, weight: .medium, design: .rounded))
-                        .foregroundStyle(Color.lifeTextSecondary)
-                    }
-
-                    Spacer(minLength: 12)
-
-                    tomorrowCrystalButton(compact: compact)
-                        .padding(.top, compact ? 2 : 8)
+                HStack(spacing: 10) {
+                    Text(viewModel?.todayWeekday ?? "")
+                    Text("·")
+                    Text(compact ? "继续记录此刻" : "记录今天，预测明天")
                 }
-
-                Text(compact ? "继续记录此刻" : "记录今天，预测明天")
-                    .font(.system(size: compact ? 16 : 17, weight: .semibold, design: .rounded))
-                    .foregroundStyle(Color.lifeTextSecondary)
-                    .padding(.top, compact ? 0 : 4)
+                .font(.system(size: 15, weight: .medium, design: .rounded))
+                .foregroundStyle(Color.lifeTextSecondary)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
+
+            Spacer(minLength: 12)
+
+            tomorrowCrystalButton(compact: compact)
+                .padding(.top, compact ? 0 : 6)
         }
-        .frame(height: compact ? 96 : 138)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(height: compact ? 82 : 104)
     }
 
     private func tomorrowCrystalButton(compact: Bool) -> some View {
@@ -209,46 +177,38 @@ struct MainRecordView: View {
     }
 
     private var mascotHero: some View {
-        HStack(spacing: 10) {
-            VStack(alignment: .leading, spacing: 12) {
-                Label("\(todayEntryCount) 条记录", systemImage: "checkmark.circle.fill")
-                    .font(.system(size: 17, weight: .bold, design: .rounded))
+        VStack(spacing: 16) {
+            ZStack(alignment: .bottom) {
+                SunriseDome(width: 290)
+
+                MascotVideoView()
+                    .frame(width: 196, height: 196)
+                    .floating(amplitude: 3, duration: 4.8)
+            }
+            .frame(height: 206, alignment: .bottom)
+
+            VStack(spacing: 8) {
+                Text(todayEntryCount == 0 ? "今天还没有记录" : "今天 \(todayEntryCount) 条记录")
+                    .font(.system(size: 22, weight: .heavy, design: .rounded))
                     .foregroundStyle(Color.lifeText)
+                    .contentTransition(.numericText())
 
                 Text(todayEntryCount == 0 ? "留下第一条线索" : "记录越完整，明天的预测越清晰")
                     .font(.system(size: 13, weight: .medium, design: .rounded))
                     .foregroundStyle(Color.lifeTextSecondary)
-                    .fixedSize(horizontal: false, vertical: true)
 
-                HStack(spacing: 5) {
+                HStack(spacing: 6) {
                     ForEach(0..<5, id: \.self) { index in
                         Capsule()
                             .fill(index < predictionSignalLevel ? Color.lifeAccent : Color.lifeAccent.opacity(0.12))
-                            .frame(width: 17, height: 6)
+                            .frame(width: 18, height: 6)
                     }
                 }
+                .padding(.top, 2)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.leading, 4)
-
-            ZStack(alignment: .bottom) {
-                Circle()
-                    .trim(from: 0, to: 0.5)
-                    .fill(Color.lifeSoftPeach.opacity(0.78))
-                    .frame(width: 238, height: 238)
-                    .rotationEffect(.degrees(180))
-                    .offset(y: 68)
-                    .blur(radius: 0.4)
-
-                MascotVideoView()
-                    .frame(width: 218, height: 218)
-                    .offset(y: 20)
-            }
-            .frame(width: 230, height: 178)
-            .clipped()
         }
         .frame(maxWidth: .infinity)
-        .frame(height: 178)
+        .padding(.top, 6)
     }
 
     private var todayEntryCount: Int {
@@ -307,17 +267,14 @@ struct MainRecordView: View {
             .frame(maxWidth: .infinity)
             .frame(height: 88)
             .background(
-                RoundedRectangle(cornerRadius: 30, style: .continuous)
-                    .fill(
-                        LinearGradient(
-                            colors: visual.gradient,
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .opacity(isSelected ? 0.92 : 0.68)
+                RoundedRectangle(cornerRadius: 28, style: .continuous)
+                    .fill(Color.white.opacity(isSelected ? 0.95 : 0.72))
             )
-            .shadow(color: visual.color.opacity(isSelected ? 0.14 : 0.05), radius: 12, y: 7)
+            .overlay(
+                RoundedRectangle(cornerRadius: 28, style: .continuous)
+                    .stroke(visual.color.opacity(isSelected ? 0.32 : 0), lineWidth: 1.5)
+            )
+            .shadow(color: visual.color.opacity(isSelected ? 0.16 : 0.06), radius: 14, y: 8)
             .scaleEffect(isSelected ? 1.015 : 0.98)
         }
         .buttonStyle(.plain)
@@ -358,14 +315,10 @@ struct MainRecordView: View {
             .frame(height: 158)
             .frame(maxWidth: .infinity)
             .background(
-                LinearGradient(
-                    colors: [Color.white.opacity(0.82), Color.lifeSoftLavender.opacity(0.34)],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                ),
-                in: RoundedRectangle(cornerRadius: 32, style: .continuous)
+                Color.white.opacity(0.9),
+                in: RoundedRectangle(cornerRadius: 30, style: .continuous)
             )
-            .shadow(color: Color.lifeAccent.opacity(0.07), radius: 18, y: 10)
+            .shadow(color: Color(hex: "C8A878").opacity(0.16), radius: 18, y: 10)
         }
         .buttonStyle(.plain)
     }
@@ -421,6 +374,11 @@ struct MainRecordView: View {
 
             inputArea
                 .frame(maxHeight: .infinity, alignment: .top)
+                .background(
+                    Color.white.opacity(0.88),
+                    in: RoundedRectangle(cornerRadius: 30, style: .continuous)
+                )
+                .shadow(color: Color(hex: "C8A878").opacity(0.14), radius: 18, y: 10)
         }
         .frame(maxHeight: .infinity, alignment: .top)
     }

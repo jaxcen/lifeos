@@ -11,12 +11,12 @@ struct PaperCardModifier: ViewModifier {
         content
             .padding(padding)
             .background(
-                RoundedRectangle(cornerRadius: Layout.cardCornerRadius)
+                RoundedRectangle(cornerRadius: Layout.cardCornerRadius, style: .continuous)
                     .fill(tintColor)
             )
-            .clipShape(RoundedRectangle(cornerRadius: Layout.cardCornerRadius))
+            .clipShape(RoundedRectangle(cornerRadius: Layout.cardCornerRadius, style: .continuous))
             .shadow(
-                color: .black.opacity(0.08),
+                color: Color(hex: "C8A878").opacity(0.14),
                 radius: Layout.cardShadowRadius,
                 y: Layout.cardShadowY
             )

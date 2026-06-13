@@ -11,19 +11,15 @@ struct BookshelfView: View {
     }
 
     var body: some View {
-        ZStack {
-            bookshelfBackground
-
-            ScrollView {
-                VStack(spacing: 0) {
-                    if viewModel.books.isEmpty {
-                        emptyState
-                    } else {
-                        bookshelfContent
-                    }
+        ScrollView(showsIndicators: false) {
+            VStack(spacing: 0) {
+                if viewModel.books.isEmpty {
+                    emptyState
+                } else {
+                    bookshelfContent
                 }
-                .padding(.horizontal, Layout.spacingM)
             }
+            .padding(.horizontal, Layout.spacingL)
         }
         .sheet(item: $selectedBook) { book in
             BookOpenView(book: book)
@@ -31,33 +27,6 @@ struct BookshelfView: View {
         .onAppear {
             viewModel.loadBooks()
         }
-    }
-
-    private var bookshelfBackground: some View {
-        ZStack {
-            LinearGradient(
-                colors: [
-                    Color.lifeMistBackground,
-                    Color.lifeLavenderMist.opacity(0.9),
-                    Color.white
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-
-            Circle()
-                .fill(Color.lifeSoftLavender.opacity(0.36))
-                .frame(width: 260, height: 260)
-                .blur(radius: 38)
-                .offset(x: 150, y: -180)
-
-            Circle()
-                .fill(Color.lifeSoftSky.opacity(0.32))
-                .frame(width: 240, height: 240)
-                .blur(radius: 42)
-                .offset(x: -150, y: 260)
-        }
-        .ignoresSafeArea()
     }
 
     // MARK: - 书架内容
@@ -72,7 +41,7 @@ struct BookshelfView: View {
                 BookShelfRowView(books: rowBooks) { book in
                     selectedBook = book
                 }
-                .padding(.vertical, Layout.spacingS)
+                .padding(.bottom, Layout.spacingXL)
             }
 
             // 底部留白
@@ -83,17 +52,11 @@ struct BookshelfView: View {
     // MARK: - 顶部装饰
 
     private var topDecoration: some View {
-        VStack(spacing: Layout.spacingM) {
-            Capsule()
-                .fill(Color.lifeAccent.opacity(0.16))
-                .frame(width: 54, height: 5)
-
-            Text("轻点打开一本书")
-                .font(.lifeCaption)
-                .foregroundStyle(Color.lifeTextSecondary)
-                .padding(.bottom, Layout.spacingM)
-        }
-        .padding(.top, Layout.spacingS)
+        Text("轻点打开一本书")
+            .font(.system(size: 12, weight: .medium, design: .rounded))
+            .foregroundStyle(Color.lifeTextSecondary.opacity(0.8))
+            .padding(.top, Layout.spacingS)
+            .padding(.bottom, Layout.spacingXL)
     }
 
     // MARK: - 空状态
@@ -106,6 +69,7 @@ struct BookshelfView: View {
             Image(systemName: "books.vertical")
                 .font(.system(size: 48))
                 .foregroundStyle(Color.lifeAccent.opacity(0.45))
+                .breathing(minScale: 0.96, maxScale: 1.04, duration: 4.6)
 
             Text("书架还是空的")
                 .font(.lifeHeadline)

@@ -1,110 +1,106 @@
 import SwiftUI
 
-/// 书封面 - 立体书效果
+/// 书封面 - 简约暖色封面
 struct BookCoverView: View {
+    static let coverWidth: CGFloat = 128
+    static let coverHeight: CGFloat = 176
+
     let book: DiaryBook
     let onTap: () -> Void
 
     var body: some View {
         Button(action: onTap) {
-            ZStack(alignment: .leading) {
-                // 书脊（左侧）
-                spine
-
-                // 页边（右侧）
-                pageEdges
-                    .offset(x: 110)
-
-                // 封面（主体）
-                frontCover
-                    .offset(x: 8)
-            }
-            .frame(width: 120, height: 168)
+            cover
         }
-        .buttonStyle(.plain)
+        .buttonStyle(BookPressStyle())
     }
 
-    // MARK: - 书脊
-
-    private var spine: some View {
-        RoundedRectangle(cornerRadius: 2)
-            .fill(Color.lifeAccent.opacity(0.76))
-            .frame(width: 10, height: 168)
-            .overlay(
-                Text(book.title)
-                    .font(.system(size: 10, weight: .medium))
-                    .foregroundStyle(.white.opacity(0.9))
-                    .rotationEffect(.degrees(-90))
-                    .fixedSize()
-            )
-            .shadow(color: .black.opacity(0.15), radius: 4, x: 2, y: 0)
-    }
-
-    // MARK: - 封面
-
-    private var frontCover: some View {
-        RoundedRectangle(cornerRadius: 4)
-            .fill(
-                LinearGradient(
-                    colors: [
-                        book.coverColor.opacity(0.78),
-                        Color.lifeAccent.opacity(0.72),
-                        Color.lifePhotoAccent.opacity(0.64)
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
+    private var cover: some View {
+        ZStack {
+            // 封面底色
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(
+                    LinearGradient(
+                        colors: [
+                            book.coverColor.opacity(0.95),
+                            book.coverColor.opacity(0.68)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
                 )
-            )
-            .frame(width: 105, height: 168)
-            .overlay(coverContent)
-            .shadow(color: .black.opacity(0.2), radius: 8, x: 4, y: 4)
+
+            // 顶部柔光
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(
+                    LinearGradient(
+                        colors: [.white.opacity(0.22), .clear],
+                        startPoint: .top,
+                        endPoint: .center
+                    )
+                )
+
+            // 书脊折痕
+            HStack(spacing: 0) {
+                Rectangle()
+                    .fill(Color.black.opacity(0.1))
+                    .frame(width: 1.5)
+                Rectangle()
+                    .fill(Color.white.opacity(0.32))
+                    .frame(width: 1.5)
+                Spacer()
+            }
+            .padding(.leading, 10)
+
+            coverContent
+        }
+        .frame(width: Self.coverWidth, height: Self.coverHeight)
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .shadow(color: book.coverColor.opacity(0.34), radius: 12, y: 9)
     }
 
     private var coverContent: some View {
-        VStack(spacing: Layout.spacingM) {
+        VStack(spacing: 10) {
             Spacer()
 
-            // 装饰图标
             Image(systemName: book.coverIcon)
-                .font(.system(size: 28))
-                .foregroundStyle(.white.opacity(0.25))
+                .font(.system(size: 24, weight: .medium))
+                .foregroundStyle(.white.opacity(0.85))
+                .frame(width: 52, height: 52)
+                .background(.white.opacity(0.16), in: Circle())
 
-            // 书名
             Text(book.title)
-                .font(.system(size: 16, weight: .bold))
+                .font(.system(size: 16, weight: .bold, design: .rounded))
                 .foregroundStyle(.white)
                 .multilineTextAlignment(.center)
+                .lineLimit(2)
 
-            // 副标题
             Text(book.subtitle)
-                .font(.system(size: 10))
-                .foregroundStyle(.white.opacity(0.7))
+                .font(.system(size: 10, weight: .medium, design: .rounded))
+                .foregroundStyle(.white.opacity(0.72))
+                .lineLimit(1)
 
             Spacer()
 
-            // 章节数
-            Text("\(book.chapterCount)章")
-                .font(.system(size: 9, weight: .medium))
-                .foregroundStyle(.white.opacity(0.8))
-                .padding(.horizontal, 8)
-                .padding(.vertical, 3)
-                .background(.white.opacity(0.15))
-                .clipShape(Capsule())
+            Text("\(book.chapterCount) 章")
+                .font(.system(size: 10, weight: .semibold, design: .rounded))
+                .foregroundStyle(.white.opacity(0.9))
+                .padding(.horizontal, 10)
+                .padding(.vertical, 4)
+                .background(.white.opacity(0.18), in: Capsule())
         }
-        .padding(.vertical, Layout.spacingL)
-        .padding(.horizontal, Layout.spacingS)
+        .padding(.vertical, 16)
+        .padding(.horizontal, 14)
+        .padding(.leading, 6)
     }
+}
 
-    // MARK: - 页边
-
-    private var pageEdges: some View {
-        VStack(spacing: 0) {
-            ForEach(0..<3, id: \.self) { i in
-                Rectangle()
-                    .fill(Color.white.opacity(0.86))
-                    .frame(width: 3, height: CGFloat(168 - i * 2))
-                    .offset(x: CGFloat(i) * 0.5)
-            }
-        }
+/// 按压回弹 - 轻盈的拿书手感
+private struct BookPressStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.95 : 1)
+            .offset(y: configuration.isPressed ? 2 : 0)
+            .animation(.spring(response: 0.28, dampingFraction: 0.7), value: configuration.isPressed)
     }
 }

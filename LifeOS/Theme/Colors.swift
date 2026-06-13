@@ -1,10 +1,10 @@
 import SwiftUI
 
-/// 设计系统 - 颜色 (简约现代风)
+/// 设计系统 - 颜色 (暖奶油 · 简约现代风)
 extension Color {
     // MARK: - 主色调
-    /// 浅灰白 - 主背景
-    static let lifeBackground = Color(hex: "F5F5F7")
+    /// 暖米白 - 主背景
+    static let lifeBackground = Color(hex: "FAF6EF")
     /// 纯白 - 卡片背景
     static let lifeCardBackground = Color(hex: "FFFFFF")
     /// 深靛蓝 - 主强调色
@@ -14,14 +14,22 @@ extension Color {
     /// 中灰 - 次要文字
     static let lifeTextSecondary = Color(hex: "86868B")
 
-    // MARK: - 首页柔光主题
-    static let lifeMistBackground = Color(hex: "F7F8FF")
-    static let lifeLavenderMist = Color(hex: "E9E8FF")
-    static let lifeSoftLavender = Color(hex: "DCD9FF")
-    static let lifeSoftPeach = Color(hex: "FFE6D7")
-    static let lifeSoftSky = Color(hex: "DDEEFF")
+    // MARK: - 全局暖奶油主题
+    static let lifeMistBackground = Color(hex: "FFF9F1")
+    static let lifeLavenderMist = Color(hex: "FFF1E2")
+    static let lifeSoftLavender = Color(hex: "E3E1FB")
+    static let lifeSoftPeach = Color(hex: "FFE3C7")
+    static let lifeSoftSky = Color(hex: "DCEBFA")
     static let lifeVoiceAccent = Color(hex: "F28D63")
     static let lifePhotoAccent = Color(hex: "6EA7E8")
+
+    // MARK: - 日出暖色
+    /// 日出橙 - 吉祥物穹顶
+    static let lifeSunrise = Color(hex: "FFC18A")
+    /// 日出浅杏 - 穹顶过渡
+    static let lifeSunriseSoft = Color(hex: "FFE8CF")
+    /// 暖沙色 - 书架托板
+    static let lifeShelfWood = Color(hex: "F0DFC8")
 
     // MARK: - 功能色
     /// 翠绿 - 宜/正面

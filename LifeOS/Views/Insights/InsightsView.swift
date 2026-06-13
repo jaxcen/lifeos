@@ -26,9 +26,7 @@ struct InsightsView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                if displayMode == .card {
-                    PaperBackground()
-                }
+                WarmBreathingBackground()
 
                 if let vm = viewModel {
                     VStack(spacing: 0) {
@@ -130,36 +128,50 @@ struct InsightsView: View {
 
     @ViewBuilder
     private func headerSection(_ vm: HomeViewModel) -> some View {
-        VStack(spacing: Layout.spacingS) {
-            // 模式切换
-            HStack(spacing: Layout.spacingS) {
-                ForEach(DisplayMode.allCases, id: \.self) { mode in
-                    Button {
-                        withAnimation(.easeInOut(duration: 0.2)) {
-                            displayMode = mode
-                        }
-                    } label: {
-                        Image(systemName: mode.icon)
-                            .font(.system(size: 16, weight: .medium))
-                            .foregroundStyle(displayMode == mode ? Color.lifeAccent : Color.lifeTextSecondary)
-                            .frame(width: 36, height: 36)
-                            .background(
-                                displayMode == mode
-                                    ? Color.lifeAccent.opacity(0.1)
-                                    : Color.clear
-                            )
-                            .clipShape(RoundedRectangle(cornerRadius: Layout.radiusS))
-                    }
-                }
+        HStack(alignment: .center) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(displayMode == .card ? "今日手账" : "人生书架")
+                    .font(.system(size: 30, weight: .heavy, design: .rounded))
+                    .foregroundStyle(Color.lifeText)
+
+                Text(displayMode == .card ? "回看每一天留下的线索" : "把日子读成一本本书")
+                    .font(.system(size: 13, weight: .medium, design: .rounded))
+                    .foregroundStyle(Color.lifeTextSecondary)
             }
 
-            // 标题
-            Text(displayMode == .card ? "今日手账" : "人生书架")
-                .font(.lifeTitle)
-                .foregroundStyle(Color.lifeText)
+            Spacer()
+
+            modeSwitch
         }
+        .padding(.horizontal, Layout.spacingXL)
         .padding(.top, Layout.spacingL)
         .padding(.bottom, Layout.spacingM)
+    }
+
+    /// 卡片 / 书架 模式切换胶囊
+    private var modeSwitch: some View {
+        HStack(spacing: 4) {
+            ForEach(DisplayMode.allCases, id: \.self) { mode in
+                Button {
+                    withAnimation(.spring(response: 0.34, dampingFraction: 0.86)) {
+                        displayMode = mode
+                    }
+                } label: {
+                    Image(systemName: mode.icon)
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(displayMode == mode ? .white : Color.lifeTextSecondary)
+                        .frame(width: 40, height: 40)
+                        .background(
+                            displayMode == mode ? Color.lifeAccent : Color.clear,
+                            in: Circle()
+                        )
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(4)
+        .background(Color.white.opacity(0.78), in: Capsule())
+        .shadow(color: Color(hex: "C8A878").opacity(0.16), radius: 12, y: 6)
     }
 
     private func insightsLoadingOverlay(_ message: String) -> some View {
